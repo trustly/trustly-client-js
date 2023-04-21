@@ -1,0 +1,6 @@
+target
+node_modules
+.idea
+
+original_java
+generated_java2ts

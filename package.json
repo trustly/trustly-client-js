@@ -1,0 +1,19 @@
+{
+  "name": "trustly-client-js",
+  "packageManager": "pnpm@7.30.0",
+  "version": "1.0.0",
+  "scripts": {
+    "java2ts": "java2ts java2ts_config.json"
+  },
+  "dependencies": {
+    "jest": "^29.5.0",
+    "java2typescript": "^1.0.2",
+    "jree": "^1.2.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.4",
+    "@typescript-eslint/parser": "^5.59.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.0",
+    "eslint": "^8.38.0"
+  }
+}
