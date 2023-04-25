@@ -1,146 +1,132 @@
+import {SettlementReportResponseDataEntry} from './SettlementReportResponseDataEntry';
 
+type Mapper = (row: SettlementReportResponseDataEntry, original: string) => void
 
+export class SettlementReportParser {
 
-import { java, JavaObject, int, char } from "jree";
-
-export interface Mapper {
-
-  map(row: SettlementReportResponseDataEntryBuilder| null, value: string| null): void;
-}
-
-export  class SettlementReportParser extends JavaObject {
-
-  private static readonly NOOP_MAPPER: Mapper = (row, value) => {
+  private static readonly NOOP_MAPPER: Mapper = () => {
+    // Does nothing
   };
 
-  private static readonly DATE_TIME_FORMATTERS:  java.time.format.DateTimeFormatter[] | null =  [
+  private readonly mappers: Map<string, Mapper> = new Map<string, Mapper>();
 
-    new  java.time.format.DateTimeFormatterBuilder()
-      .parseCaseInsensitive()
-      .append(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
-      .appendLiteral(' ')
-      .append(java.time.format.DateTimeFormatter.ISO_LOCAL_TIME)
-      .appendOffsetId()
-      .toFormatter(java.util.Locale.ROOT),
-
-    java.time.format.DateTimeFormatter.ISO_DATE_TIME,
-    java.time.format.DateTimeFormatter.ISO_INSTANT
-  ];
-
-  private readonly mappers:  java.util.Map<string, SettlementReportParser.Mapper> | null = new  java.util.HashMap();
+  private addMapper(csvKey: string, mapper: Mapper) {
+    this.mappers.set(csvKey, mapper);
+  }
 
   public constructor() {
-    super();
-this.mappers.put("accountname", SettlementReportResponseDataEntryBuilder.accountName);
-    this.mappers.put("currency", SettlementReportResponseDataEntryBuilder.currency);
-    this.mappers.put("messageid", SettlementReportResponseDataEntryBuilder.messageId);
-    this.mappers.put("orderid", SettlementReportResponseDataEntryBuilder.orderId);
-    this.mappers.put("ordertype", SettlementReportResponseDataEntryBuilder.orderType);
-    this.mappers.put("username", SettlementReportResponseDataEntryBuilder.username);
-    this.mappers.put("fxpaymentcurrency", SettlementReportResponseDataEntryBuilder.fxPaymentCurrency);
-    this.mappers.put("settlementbankwithdrawalid", SettlementReportResponseDataEntryBuilder.settlementBankWithdrawalId);
-    this.mappers.put("externalreference", SettlementReportResponseDataEntryBuilder.externalReference);
+    this.addMapper('accountname', (row, v) => row.accountName = v);
+    this.addMapper('currency', (row, v) => row.currency = v);
+    this.addMapper('messageid', (row, v) => row.messageId = v);
+    this.addMapper('orderid', (row, v) => row.orderId = v);
+    this.addMapper('ordertype', (row, v) => row.orderType = v);
+    this.addMapper('username', (row, v) => row.username = v);
+    this.addMapper('fxpaymentcurrency', (row, v) => row.fxPaymentCurrency = v);
+    this.addMapper('settlementbankwithdrawalid', (row, v) => row.settlementBankWithdrawalId = v);
+    this.addMapper('externalreference', (row, v) => row.externalReference = v);
 
-    this.mappers.put("amount", (row, value) => row.amount(java.lang.Double.parseDouble(java.nio.file.attribute.FileAttribute.value)));
-    this.mappers.put("fxpaymentamount", (row, value) => row.fxPaymentAmount(java.lang.Double.parseDouble(java.nio.file.attribute.FileAttribute.value)));
-    this.mappers.put("total", (row, value) => row.total(java.lang.Double.parseDouble(java.nio.file.attribute.FileAttribute.value)));
+    this.addMapper('amount', (row, v) => row.amount = parseFloat(v));
+    this.addMapper('fxpaymentamount', (row, v) => row.fxPaymentAmount = parseFloat(v));
+    this.addMapper('total', (row, v) => row.total = parseFloat(v));
 
-    this.mappers.put("datestamp", (row, value) => {
+    this.addMapper('datestamp', (row, v) => {
 
-      const  exceptions: java.util.List<java.time.format.DateTimeParseException> = new  java.util.ArrayList();
-      for (const formatter of SettlementReportParser.DATE_TIME_FORMATTERS) {
-        try {
-          row.datestamp(formatter.parse(java.nio.file.attribute.FileAttribute.value, java.time.Instant.from));
+      // 2014-03-31 11:50:06.46106+00
+      const regex = /^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})[T ]([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})\.?([0-9]{0,8})(?:\+([0-9]{1,2}))?$/g;
+
+      for (const match of v.matchAll(regex)) {
+
+        const [year, month, day, hours, minutes, seconds, ms] =
+          [
+            parseInt(match[1]), parseInt(match[2]), parseInt(match[3]), parseInt(match[4]), parseInt(match[5]), parseInt(match[6]),
+            match[7] ? parseInt(match[7]) : 0
+          ];
+
+        if (year) {
+          row.datestamp = new Date(year, month, day, hours, minutes, seconds, ms);
           return;
-        } catch (ex) {
-if (ex instanceof java.time.format.DateTimeParseException) {
-          exceptions.add(ex);
-        } else {
-	throw ex;
-	}
-}
+        }
       }
 
-      throw exceptions.stream().findFirst().orElseThrow(() => new  java.lang.IllegalStateException("Unknown date format exception"));
+      throw new Error('Unknown date format exception');
     });
   }
 
-  public parse(csv: string| null):  java.util.List<SettlementReportResponseDataEntry> | null {
-    const  lines: string[] = csv.replace("\r", "").trim().split("\n");
-    const  rows: java.util.List<SettlementReportResponseDataEntry> = new  java.util.ArrayList();
+  public parse(csv: string): SettlementReportResponseDataEntry[] {
+    const lines: string[] = csv.replace('\r', '').trim().split('\n');
+    const rows: SettlementReportResponseDataEntry[] = [];
 
     if (lines.length === 0) {
       return rows;
     }
 
-    const  headers: string[] = lines[0].split(",");
+    const headers: string[] = lines[0].split(',');
 
-    const  localMappers: java.util.List<SettlementReportParser.Mapper> = new  java.util.ArrayList();
+    const localMappers: Mapper[] = [];
     for (const header of headers) {
-      const  lowerCaseHeaderKey: string = header.toLowerCase(java.util.Locale.ROOT);
-      if (this.mappers.containsKey(lowerCaseHeaderKey)) {
-        localMappers.add(this.mappers.get(lowerCaseHeaderKey));
-      } else {
+      const lowerCaseHeaderKey = header.toLowerCase();
+      const mapper: Mapper = this.mappers.get(lowerCaseHeaderKey)
         // We do not recognize this new header key.
         // This could count as an error, but we will let it go.
         // The preferred way would perhaps be to log about the lost data,
         // but we do not want to include a dependency on a logging library.
-        localMappers.add(SettlementReportParser.NOOP_MAPPER);
-      }
+        ?? SettlementReportParser.NOOP_MAPPER;
+
+      localMappers.push(mapper);
     }
 
-    for (let  i: int = 1; i < lines.length; i++) {
-      const  line: string = lines[i];
-      if (line === null || line.isEmpty()) {
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line === null || line == '') {
         continue;
       }
 
-      const  fieldsValues: string[] = this.getFieldValues(line);
+      const fieldsValues: string[] = this.getFieldValues(line);
 
-      const  rowBuilder: SettlementReportResponseDataEntryBuilder = SettlementReportResponseDataEntry.builder();
-      for (let  columnIndex: int = 0; columnIndex < fieldsValues.length; columnIndex++) {
-        if (fieldsValues[columnIndex] !== null && !fieldsValues[columnIndex].isEmpty()) {
-          localMappers.get(columnIndex).map(rowBuilder, fieldsValues[columnIndex]);
+      const row: Partial<SettlementReportResponseDataEntry> = {}; // SettlementReportResponseDataEntry.builder();
+      for (let columnIndex = 0; columnIndex < fieldsValues.length; columnIndex++) {
+        if (fieldsValues[columnIndex]) {
+          localMappers[columnIndex](row, fieldsValues[columnIndex]); //.map(rowBuilder, fieldsValues[columnIndex]);
         }
       }
 
-      rows.add(rowBuilder.build());
+      rows.push(row);
     }
 
     return rows;
   }
 
-  private getFieldValues(line: string| null):  string[] | null {
-    const  tokens: java.util.List<string> = new  java.util.ArrayList();
+  private getFieldValues(line: string): string[] {
+    const tokens: string[] = [];
 
-    const  buffer: java.lang.StringBuilder = new  java.lang.StringBuilder();
-    let  insideQuote = false;
+    const buffer: string[] = [];
+    let insideQuote = false;
 
-    for (let  i: int = 0; i < line.length(); i++) {
-      const  c: char = line.charAt(i);
+    for (let i = 0; i < line.length; i++) {
+      const c = line.charAt(i);
       if (insideQuote) {
         if (c === '"') {
           insideQuote = false;
         } else {
-          buffer.append(c);
+          buffer.push(c);
         }
       } else {
         if (c === '"') {
           insideQuote = true;
         } else if (c === ',') {
-          tokens.add(buffer.toString());
-          buffer.setLength(0);
+          tokens.push(buffer.join('').toString());
+          buffer.length = 0; //.setLength(0);
         } else {
-          buffer.append(c);
+          buffer.push(c);
         }
       }
     }
 
-    if (buffer.length() > 0) {
-      tokens.add(buffer.toString());
-      buffer.setLength(0);
+    if (buffer.length > 0) {
+      tokens.push(buffer.join('').toString());
+      buffer.length = 0;
     }
 
-    return tokens.toArray(new   Array<string>(0));
+    return tokens; // .toArray(new Array<string>(0));
   }
 }

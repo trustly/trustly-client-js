@@ -1,12 +1,11 @@
 import {IData} from './IData';
+import {SignatureOwner} from './SignatureOwner';
 
-export interface IRequestParams<D extends IData> {
+export interface IRequestParams<D extends IData> extends SignatureOwner {
 
-  signature: string;
+  readonly signature: string;
 
-  uuid: string;
+  readonly uuid: string;
 
-  data: D;
-
-  withSignature(value: string): this;
+  readonly data: D;
 }

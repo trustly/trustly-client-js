@@ -1,4 +1,3 @@
-import {java, S} from 'jree';
 import {TrustlyApiClientSettings} from './TrustlyApiClientSettings';
 import {Serializer} from './Serializer';
 import {JsonRpcRequest} from '../domain/base/JsonRpcRequest';
@@ -7,6 +6,11 @@ import {JsonRpcResponse} from '../domain/base/JsonRpcResponse';
 import {IResponseResultData} from '../domain/base/IResponseResultData';
 import {JsonRpcSigner} from './JsonRpcSigner';
 import {IData} from '../domain/base/IData';
+import {IRequest} from '../domain/base/IRequest';
+import {IRequestParams} from '../domain/base/IRequestParams';
+import {TrustlyStringUtils} from '../util/TrustlyStringUtils';
+import {WithoutSignature} from '../domain/base/WithoutSignature';
+import * as crypto from 'crypto';
 
 export class DefaultJsonRpcSigner implements JsonRpcSigner {
 
@@ -20,195 +24,104 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
     this.settings = settings;
   }
 
-  public createPlaintext(serializedData: string, method: string, uuid: string): string {
+  public createPlaintext(serializedData: string, method: string, uuid: string): crypto.BinaryLike {
     return `${method}${uuid}${serializedData}`;
   }
 
-  public sign<T extends IRequestParamsData>(request: JsonRpcRequest<T> | null): JsonRpcRequest<T> | null;
+  public signRequest<D extends IRequestParamsData, T extends JsonRpcRequest<D>>(v: WithoutSignature<T>): JsonRpcRequest<D> {
 
-  public sign<T extends IResponseResultData>(response: JsonRpcResponse<T> | null): JsonRpcResponse<T> | null;
-  public sign<T extends IRequestParamsData>(...args: unknown[]): JsonRpcRequest<T> | JsonRpcResponse<T> {
-    switch (args.length) {
-      case 1: {
-        const [request] = args as [JsonRpcRequest<T>];
+    const signature = this.createSignature(v.method, v.params.uuid, v.params.data);
 
+    return {
+      ...v,
+      params: {
+        ...v.params,
+        signature: signature,
+      },
+    };
+  }
 
-        const signature: string = this.createSignature(request.getMethod(), request.getParams().getUuid(), request.getParams().getData());
+  public signResponse<D extends IResponseResultData, T extends JsonRpcResponse<D>>(response: WithoutSignature<T>): JsonRpcResponse<D> {
 
-        return request.toBuilder()
-          .params(
-            request.getParams().withSignature(signature),
-          )
-          .build();
+    if (response.result) {
+      const signature = this.createSignature(response.result.method, response.result.uuid, response.result.data);
+      return {
+        ...response,
+        result: {
+          ...response.result,
+          signature: signature,
+        }
+      };
 
-
-        break;
-      }
-
-      case 1: {
-        const [response] = args as [JsonRpcResponse<T>];
-
-
-        const signature: string = this.createSignature(response.getMethod(), response.getUUID(), response.getData());
-
-        return response.toBuilder()
-          .result(
-            response.getResult().toBuilder()
-              .signature(signature)
-              .build(),
-          )
-          .build();
-
-
-        break;
-      }
-
-      default: {
-        throw new java.lang.IllegalArgumentException(S`Invalid number of arguments`);
-      }
+    } else if (response.error && response.error.error) {
+      const signature = this.createSignature(response.error.error.method, response.error.error.uuid, response.error.error.data);
+      return {
+        ...response,
+        error: {
+          ...response.error,
+          error: {
+            ...response.error.error,
+            signature: signature,
+          },
+        },
+      };
+    } else {
+      throw new Error(`There must be either a result or an error`);
     }
   }
 
+  private createSignature<T extends IData>(method: string, uuid: string, data: T): string {
+    const serializedData = this.serializer.serializeData(data);
+    const plainText = this.createPlaintext(serializedData, method, uuid);
 
-  private createSignature<T extends IData>(method: string | null, uuid: string | null, data: T | null): string | null {
-    const serializedData: string = this.serializer.serializeData(data);
-    const plainText: string = this.createPlaintext(serializedData, method, uuid);
-
-    let signer: java.security.Signature;
-    try {
-      signer = java.security.Signature.getInstance(DefaultJsonRpcSigner.SHA1_WITH_RSA, BouncyCastleProvider.PROVIDER_NAME);
-    } catch (ex) {
-      if (ex instanceof java.security.NoSuchAlgorithmException) {
-        throw new java.lang.IllegalArgumentException('Could not find signing algorithm. Has BouncyCastle not been initialized?', ex);
-      } else if (ex instanceof java.security.NoSuchProviderException) {
-        throw new java.lang.IllegalArgumentException('Could not find provider. Has BouncyCastle not been initialized?', ex);
-      } else {
-        throw ex;
-      }
-    }
-
-    try {
-      signer.initSign(this.settings.getClientPrivateKey());
-    } catch (e) {
-      if (e instanceof java.security.InvalidKeyException) {
-        throw new java.lang.IllegalArgumentException('Could not sign using given client private key', e);
-      } else {
-        throw e;
-      }
-    }
-
-    const plainBytes: Int8Array = plainText.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-    let signedBytes: Int8Array;
-
-    try {
-      signer.update(plainBytes);
-      signedBytes = signer.sign();
-    } catch (e) {
-      if (e instanceof java.security.SignatureException) {
-        throw new java.lang.IllegalArgumentException(string.format('Could not create signature for method %s', method), e);
-      } else {
-        throw e;
-      }
-    }
-
-    return java.util.Base64.getEncoder().encodeToString(signedBytes);
+    const sign = crypto.createSign('SHA1withRSA'); // RSA-SHA256
+    sign.update(plainText);  // data from your file would go here
+    return sign.sign(this.settings.getClientPrivateKey(), 'base64');
   }
 
-  public verify<D extends IRequestParamsData, P extends IRequestParams<D>>(request: IRequest<P> | null): void;
+  public verifyRequest<D extends IRequestParamsData, P extends IRequestParams<D>>(request: IRequest<P>): void {
 
-  public verify<T extends IResponseResultData>(response: JsonRpcResponse<T> | null, nodeResponse: JsonNode | null): void;
+    const uuid = request.params.uuid;
+    const signature = request.params.signature;
+    const data = request.params.data;
 
-  private verify(method: string | null, uuid: string | null, expectedSignature: string | null, data: IData | null, dataNode: JsonNode | null): void;
-  public verify<D extends IRequestParamsData, P extends IRequestParams<D>>(...args: unknown[]): void {
-    switch (args.length) {
-      case 1: {
-        const [request] = args as [IRequest<P>];
-
-
-        const uuid: string = (request.getParams() === null) ? null : request.getParams().getUuid();
-        const signature: string = (request.getParams() === null) ? null : request.getParams().getSignature();
-        const data: D = (request.getParams() === null) ? null : request.getParams().getData();
-
-        this.verify(request.getMethod(), uuid, signature, data, null);
-
-
-        break;
-      }
-
-      case 2: {
-        const [response, nodeResponse] = args as [JsonRpcResponse<T>, JsonNode];
-
-
-        let dataNode: JsonNode = null;
-        if (nodeResponse !== null) {
-          dataNode = nodeResponse.at('/result/data');
-          if (dataNode.isMissingNode()) {
-            dataNode = nodeResponse.at('/error/data');
-          }
-        }
-
-        this.verify(response.getMethod(), response.getUUID(), response.getSignature(), response.getData(), dataNode);
-
-
-        break;
-      }
-
-      case 5: {
-        const [method, uuid, expectedSignature, data, dataNode] = args as [string, string, string, IData, JsonNode];
-
-
-        if (TrustlyStringUtils.isBlank(expectedSignature)) {
-          throw new java.lang.IllegalArgumentException('There was no expected signature given. The payload seems malformed');
-        }
-
-        // If possible, we will serialize based on the actual data node instead of the data object.
-        // This way we can differentiate between a field that has as null value and was not given at all.
-        // This can happen with values given back from the Trustly remote server.
-        const serializedResponseData: string = (dataNode !== null && !dataNode.isMissingNode() && !dataNode.isNull())
-          ? this.serializer.serializeNode(dataNode)
-          : this.serializer.serializeData(data);
-
-        const responsePlainText: string = this.createPlaintext(serializedResponseData, method, uuid);
-
-        const responseBytes: Int8Array = responsePlainText.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        const expectedSignatureBytes: Int8Array = java.util.Base64.getDecoder().decode(expectedSignature);
-
-        try {
-
-          if (java.security.Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) === null) {
-            java.security.Security.addProvider(new BouncyCastleProvider());
-          }
-
-          const signer: java.security.Signature = java.security.Signature.getInstance(DefaultJsonRpcSigner.SHA1_WITH_RSA, BouncyCastleProvider.PROVIDER_NAME);
-          signer.initVerify(this.settings.getTrustlyPublicKey());
-          signer.update(responseBytes);
-
-          if (!signer.verify(expectedSignatureBytes)) {
-            throw new TrustlySignatureException(
-              string.format('Could not verify signature \'%s\' of message \'%s\' with method \'%s\'', expectedSignature, uuid, method));
-          }
-        } catch (e) {
-          if (e instanceof java.security.NoSuchAlgorithmException) {
-            throw new java.lang.IllegalArgumentException('Could not find the algorithm, has BouncyCastle not been initialized?', e);
-          } else if (e instanceof java.security.NoSuchProviderException) {
-            throw new java.lang.IllegalArgumentException('Could not find the security provider, has BouncyCastle not been initialized?', e);
-          } else if (e instanceof java.security.SignatureException) {
-            throw new java.lang.IllegalArgumentException('Could not update the signature with the given response bytes', e);
-          } else if (e instanceof java.security.InvalidKeyException) {
-            throw new java.lang.IllegalArgumentException('Could not verify the data with the given Trustly public key', e);
-          } else {
-            throw e;
-          }
-        }
-
-
-        break;
-      }
-
-      default: {
-        throw new java.lang.IllegalArgumentException(S`Invalid number of arguments`);
-      }
-    }
+    this.verify(request.method, uuid, signature, data);
   }
 
+  public verifyResponse<T extends IResponseResultData>(response: JsonRpcResponse<T>): void {
+
+    const method = response.result ? response.result.method : response.error?.error?.method;
+    const uuid = response.result ? response.result.uuid : response.error?.error?.uuid;
+    const signature = response.result ? response.result.signature : response.error?.error?.signature;
+    const data = response.result ? response.result.data : response.error?.error?.data;
+
+    if (!method || !uuid || !signature || !data) {
+      throw new Error(`Missing the method, uuid, signature or data from the response`);
+    }
+
+    this.verify(method, uuid, signature, data);
+  }
+
+  private verify(method: string, uuid: string, expectedSignature: string, data: IData, dataNode?: Record<string, unknown>): void {
+
+    if (TrustlyStringUtils.isBlank(expectedSignature)) {
+      throw new Error('There was no expected signature given. The payload seems malformed');
+    }
+
+    // If possible, we will serialize based on the actual data node instead of the data object.
+    // This way we can differentiate between a field that has as null value and was not given at all.
+    // This can happen with values given back from the Trustly remote server.
+    const serializedResponseData: string = dataNode
+      ? this.serializer.serializeNode(dataNode)
+      : this.serializer.serializeData(data);
+
+    const responsePlainText = this.createPlaintext(serializedResponseData, method, uuid);
+
+    const verify = crypto.createVerify('SHA1withRSA'); // RSA-SHA256
+    verify.update(responsePlainText);  // data from your file would go here
+
+    if (!verify.verify(this.settings.getTrustlyPublicKey(), expectedSignature)) {
+      throw new Error(`Could not verify the response`);
+    }
+  }
 }

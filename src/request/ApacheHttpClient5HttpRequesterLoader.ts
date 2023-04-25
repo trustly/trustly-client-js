@@ -1,22 +1,21 @@
+import {HttpRequesterLoader} from './HttpRequesterLoader';
+import {HttpRequester} from './HttpRequester';
+import {ApacheHttpClient5HttpRequester} from './ApacheHttpClient5HttpRequester';
 
-import { java, JavaObject } from "jree";
 
+export class ApacheHttpClient5HttpRequesterLoader implements HttpRequesterLoader {
 
-
-
-export  class ApacheHttpClient5HttpRequesterLoader extends JavaObject extends  HttpRequesterLoader {
-
-  public create():  HttpRequester | null {
+  public create(): HttpRequester | null {
 
     try {
-      java.lang.Class.forName("org.apache.hc.client5.http.impl.classic.HttpClients");
-      return new  ApacheHttpClient5HttpRequester();
+      java.lang.Class.forName('org.apache.hc.client5.http.impl.classic.HttpClients');
+      return new ApacheHttpClient5HttpRequester();
     } catch (e) {
-if (e instanceof java.lang.ClassNotFoundException) {
-      return null;
-    } else {
-	throw e;
-	}
-}
+      if (e instanceof java.lang.ClassNotFoundException) {
+        return null;
+      } else {
+        throw e;
+      }
+    }
   }
 }

@@ -1,12 +1,10 @@
+import {HttpRequesterLoader} from './HttpRequesterLoader';
+import {HttpRequester} from './HttpRequester';
+import {JavaUrlConnectionHttpRequester} from './JavaUrlConnectionHttpRequester';
 
-import { java, JavaObject } from "jree";
+export class JavaUrlConnectionHttpRequesterLoader implements HttpRequesterLoader {
 
-
-
-
-export  class JavaUrlConnectionHttpRequesterLoader extends JavaObject extends  HttpRequesterLoader {
-
-  public create():  HttpRequester | null {
-    return new  JavaUrlConnectionHttpRequester();
+  public create(): HttpRequester {
+    return new JavaUrlConnectionHttpRequester();
   }
 }

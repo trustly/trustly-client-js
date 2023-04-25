@@ -1,16 +1,12 @@
+import {HttpRequester} from './HttpRequester';
+import {TrustlyApiClientSettings} from '../client/TrustlyApiClientSettings';
 
 
-
-import { java, JavaObject } from "jree";
-
-
-
-
-export  class ApacheHttpClient5HttpRequester extends JavaObject extends  HttpRequester {
+export  class ApacheHttpClient5HttpRequester implements  HttpRequester {
 
   private httpClient:  java.net.http.HttpClient | null;
 
-  public request(settings: TrustlyApiClientSettings| null, request: string| null):  string | null {
+  public request(settings: TrustlyApiClientSettings, request: string):  string {
 
     if (this.httpClient === null) {
       this.httpClient = HttpClients.createDefault();

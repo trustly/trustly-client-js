@@ -1,12 +1,13 @@
 import {IResponseResultData} from './IResponseResultData';
+import {SignatureOwner} from './SignatureOwner';
 
-export interface ResponseResult<D extends IResponseResultData> {
+export interface ResponseResult<D extends IResponseResultData> extends SignatureOwner {
 
-  signature?: string;
+  signature: string;
 
-  uuid?: string;
+  uuid: string;
 
-  method?: string;
+  method: string;
 
-  data?: D;
+  data: D;
 }

@@ -1,31 +1,26 @@
+import {AnnotationsValidator} from './AnnotationsValidator';
+import {ValidationResult} from './ValidationResult';
 
+export class HibernateDataAnnotationsValidator implements AnnotationsValidator {
 
+  private static readonly EMPTY_VALIDATION_RESULTS: ValidationResult[] = [];
 
-import { java, JavaObject } from "jree";
+  private validator: Validator | null;
 
-
-
-
-export  class HibernateDataAnnotationsValidator extends JavaObject extends  AnnotationsValidator {
-
-  private static readonly EMPTY_VALIDATION_RESULTS:  java.util.List<ValidationResult> | null = java.util.Collections.unmodifiableList(new  java.util.ArrayList());
-
-  private validator:  Validator | null;
-
-  public validate <T>(obj: T| null):  java.util.List<ValidationResult> | null {
+  public validate<T>(obj: T): ValidationResult[] {
 
     if (this.validator === null) {
       this.validator = Validation.byDefaultProvider()
         .configure()
         .traversableResolver(TraversableResolvers.getDefault())
-        .messageInterpolator(new  ParameterMessageInterpolator())
+        .messageInterpolator(new ParameterMessageInterpolator())
         .buildValidatorFactory()
         .getValidator();
     }
 
-    const  errorMessages: java.util.List<string> = new  java.util.ArrayList();
+    const errorMessages: string[] = [];
     for (const validation of this.validator.validate(obj)) {
-      errorMessages.add(validation.getPropertyPath() + ": " + validation.getMessage());
+      errorMessages.add(validation.getPropertyPath() + ': ' + validation.getMessage());
     }
 
     if (!errorMessages.isEmpty()) {

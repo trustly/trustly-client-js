@@ -3,43 +3,45 @@ import {ResponseResult} from './ResponseResult';
 import {ResponseError} from './ResponseError';
 import {IData} from './IData';
 
-export class JsonRpcResponse<D extends IResponseResultData> {
+export interface JsonRpcResponseBase {
+  readonly version: '1.1' | string;
+}
 
-  public readonly version: string;
-  public result?: ResponseResult<D>;
-  public error?: ResponseError;
+export interface JsonRpcResponseWithResult<D extends IResponseResultData> extends JsonRpcResponseBase {
+  readonly result: ResponseResult<D>;
+  readonly error?: never;
+}
 
-  constructor(result: ResponseResult<D> | undefined, error?: ResponseError, version = '1.1') {
-    this.version = version;
-    if (result) {
-      this.result = result;
-    }
-    if (error) {
-      this.error = error;
-    }
+export interface JsonRpcResponseWithError extends JsonRpcResponseBase {
+  readonly result?: never;
+  readonly error: ResponseError;
+}
+
+export type JsonRpcResponse<D extends IResponseResultData> = JsonRpcResponseWithResult<D> | JsonRpcResponseWithError
+
+export class JsonRpcResponseUtils {
+
+  public isSuccessfulResult<R extends JsonRpcResponse<IResponseResultData>>(response: R): boolean {
+    return !!response.result && !response.error;
   }
 
-  public isSuccessfulResult(): boolean {
-    return this.result !== null && this.error === null;
+  public getUUID<R extends JsonRpcResponse<IResponseResultData>>(response: R): string | undefined {
+    return this.isSuccessfulResult(response) ? response.result?.uuid : response.error?.error?.uuid;
   }
 
-  public getUUID(): string | undefined {
-    return this.isSuccessfulResult() ? this.result?.uuid : this.error?.error?.uuid;
-  }
-
-  public getData(): IData | undefined {
-    if (this.isSuccessfulResult()) {
-      return this.result?.data;
+  public getData<R extends JsonRpcResponse<IResponseResultData>>(response: R): IData | undefined {
+    if (this.isSuccessfulResult(response)) {
+      return response.result?.data;
     } else {
-      return this.error?.error?.data;
+      return response.error?.error?.data;
     }
   }
 
-  public getMethod(): string | undefined {
-    return this.isSuccessfulResult() ? this.result?.method : this.error?.error?.method;
+  public getMethod<R extends JsonRpcResponse<IResponseResultData>>(response: R): string | undefined {
+    return this.isSuccessfulResult(response) ? response.result?.method : response.error?.error?.method;
   }
 
-  public getSignature(): string | undefined {
-    return this.isSuccessfulResult() ? this.result?.signature : this.error?.error?.signature;
+  public getSignature<R extends JsonRpcResponse<IResponseResultData>>(response: R): string | undefined {
+    return this.isSuccessfulResult(response) ? response.result?.signature : response.error?.error?.signature;
   }
 }

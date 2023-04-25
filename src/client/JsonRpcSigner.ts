@@ -4,14 +4,15 @@ import {IResponseResultData} from '../domain/base/IResponseResultData';
 import {JsonRpcResponse} from '../domain/base/JsonRpcResponse';
 import {IRequestParams} from '../domain/base/IRequestParams';
 import {IRequest} from '../domain/base/IRequest';
+import {WithoutSignature} from '../domain/base/WithoutSignature';
 
 export interface JsonRpcSigner {
 
-  sign<T extends IRequestParamsData>(request: JsonRpcRequest<T> | null): JsonRpcRequest<T>;
+  signRequest<D extends IRequestParamsData, T extends JsonRpcRequest<D>>(request: WithoutSignature<T>): JsonRpcRequest<D>;
 
-  sign<T extends IResponseResultData>(response: JsonRpcResponse<T> | null): JsonRpcResponse<T>;
+  signResponse<D extends IResponseResultData, T extends JsonRpcResponse<D>>(response: WithoutSignature<T>): JsonRpcResponse<D>;
 
-  verify<D extends IRequestParamsData, P extends IRequestParams<D>>(request: IRequest<P> | null): void;
+  verifyRequest<D extends IRequestParamsData, P extends IRequestParams<D>>(request: IRequest<P>): void;
 
-  verify<T extends IResponseResultData>(response: JsonRpcResponse<T> | null, nodeResponse: Object | null): void;
+  verifyResponse<T extends IResponseResultData>(response?: JsonRpcResponse<T>): void;
 }
