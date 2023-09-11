@@ -17,7 +17,7 @@ export interface JsonRpcResponseWithError extends JsonRpcResponseBase {
   readonly error: ResponseError;
 }
 
-export type JsonRpcResponse<D extends IResponseResultData> = JsonRpcResponseWithResult<D> | JsonRpcResponseWithError
+export type JsonRpcResponse<D extends IResponseResultData> = JsonRpcResponseWithResult<D> | JsonRpcResponseWithError;
 
 export class JsonRpcResponseUtils {
 

@@ -1,19 +1,17 @@
-
-import { java } from "jree";
-
-
-
+import {AbstractTrustlyApiException} from './AbstractTrustlyApiException';
 
 export  class TrustlyRejectionException extends AbstractTrustlyApiException {
 
   private readonly reason?: string;
 
-  public constructor(message: string| null, reason: string| null) {
+  public constructor(message: string, reason?: string) {
     super(message);
-    this.reason = reason;
+    if (reason) {
+      this.reason = reason;
+    }
   }
 
-  public getReason():  string | null {
+  public getReason():  string | undefined {
     return this.reason;
   }
 }

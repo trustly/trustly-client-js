@@ -1,6 +1,5 @@
 import {AbstractRequestParamsDataAttributes} from '../base/AbstractRequestParamsDataAttributes';
 
-
 export interface AccountNotificationDataAttributes extends AbstractRequestParamsDataAttributes {
 
   /**

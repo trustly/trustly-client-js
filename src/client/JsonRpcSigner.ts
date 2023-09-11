@@ -4,7 +4,7 @@ import {IResponseResultData} from '../domain/base/IResponseResultData';
 import {JsonRpcResponse} from '../domain/base/JsonRpcResponse';
 import {IRequestParams} from '../domain/base/IRequestParams';
 import {IRequest} from '../domain/base/IRequest';
-import {WithoutSignature} from '../domain/base/WithoutSignature';
+import {WithoutSignature} from '../domain/base/modifiers/WithoutSignature';
 
 export interface JsonRpcSigner {
 

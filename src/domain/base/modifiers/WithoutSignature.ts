@@ -1,4 +1,4 @@
-import {SignatureOwner} from './SignatureOwner';
+import {SignatureOwner} from '../SignatureOwner';
 import {SetOptional} from 'type-fest';
 
 export type WithoutSignature<T> = T extends SignatureOwner

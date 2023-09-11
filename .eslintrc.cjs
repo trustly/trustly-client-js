@@ -10,4 +10,8 @@ module.exports = {
   },
   plugins: ['@typescript-eslint'],
   root: true,
+  rules: {
+    "indent": ['error', 2],
+    "no-tabs": 0,
+  }
 };

@@ -1,27 +1,22 @@
+import {AnnotationsValidator} from '../validation/AnnotationsValidator';
+import {DefaultAnnotationsValidatorLoader} from '../validation/DefaultAnnotationsValidatorLoader';
+import {AnnotationsValidatorLoader} from '../validation/AnnotationsValidatorLoader';
+import {TrustlyValidationException} from '../domain/exceptions/TrustlyValidationException';
 
+export class JsonRpcValidator {
 
-
-import { java, JavaObject } from "jree";
-
-
-
-
-export  class JsonRpcValidator extends JavaObject {
-
-  private static readonly ANNOTATIONS_VALIDATORS:  AnnotationsValidatorLoader[] | null =  [
-    new  HibernateDataAnnotationsValidatorLoader()
+  private static readonly ANNOTATIONS_VALIDATORS: AnnotationsValidatorLoader[] = [
+    new DefaultAnnotationsValidatorLoader(),
   ];
 
-  private readonly validator:  AnnotationsValidator | null;
+  private readonly validator: AnnotationsValidator | undefined;
 
   public constructor() {
-
-    super();
-let  foundValidator: AnnotationsValidator = null;
-    for (let loader of JsonRpcValidator.ANNOTATIONS_VALIDATORS) {
+    let foundValidator: AnnotationsValidator | undefined = undefined;
+    for (const loader of JsonRpcValidator.ANNOTATIONS_VALIDATORS) {
 
       foundValidator = loader.create();
-      if (foundValidator !== null) {
+      if (foundValidator) {
         break;
       }
     }
@@ -29,20 +24,20 @@ let  foundValidator: AnnotationsValidator = null;
     this.validator = foundValidator;
   }
 
-  public validate(jsonRpcRequest: java.lang.Object| null):  void {
+  public validate(jsonRpcRequest: unknown): void {
 
-    if (this.validator === null) {
+    if (!this.validator) {
 
       // There was no validator on the classpath, so we will not run any validation on the request bean.
       return;
     }
 
-    let  results: java.util.List<ValidationResult> = this.validator.validate(jsonRpcRequest);
+    const results = this.validator.validate(jsonRpcRequest);
 
-    if (!results.isEmpty()) {
+    if (results.length == 0) {
 
-      let  messages: string[] = results.stream().map(ValidationResult.getErrorMessage).toArray(string[].new);
-      throw new  TrustlyValidationException(string.join(", ", messages));
+      const messages = results.map(it => it.errorMessage ?? '');
+      throw new TrustlyValidationException(messages.join(', '));
     }
   }
 }

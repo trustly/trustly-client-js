@@ -1,26 +1,110 @@
+import {HttpRequesterLoader} from '../request/HttpRequesterLoader';
+import {HttpRequester} from '../request/HttpRequester';
+import {TrustlyApiClientSettingsData} from './TrustlyApiClientSettings';
+import {NodeJsHttpRequesterLoader} from '../request/NodeJsHttpRequesterLoader';
+import {IFromTrustlyRequestData} from '../domain/base/IFromTrustlyRequestData';
+import {JsonRpcFactory} from './JsonRpcFactory';
+import {JsonRpcSigner} from './JsonRpcSigner';
+import {JsonRpcValidator} from './JsonRpcValidator';
+import {AccountLedgerRequestData} from '../domain/methods/accountledger/AccountLedgerRequestData';
+import {AccountLedgerResponseData} from '../domain/methods/accountledger/AccountLedgerResponseData';
+import {DefaultJsonRpcSigner} from './DefaultJsonRpcSigner';
+import {Serializer} from './Serializer';
 
+import {AccountPayoutRequestData} from '../domain/methods/accountpayout/AccountPayoutRequestData';
+import {AccountPayoutResponseData} from '../domain/methods/accountpayout/AccountPayoutResponseData';
 
+import {ApproveWithdrawalRequestData} from '../domain/methods/approvewithdrawal/ApproveWithdrawalRequestData';
+import {ApproveWithdrawalResponseData} from '../domain/methods/approvewithdrawal/ApproveWithdrawalResponseData';
 
-import { java, JavaObject, S } from "jree";
+import {DenyWithdrawalRequestData} from '../domain/methods/denywithdrawal/DenyWithdrawalRequestData';
+import {DenyWithdrawalResponseData} from '../domain/methods/denywithdrawal/DenyWithdrawalResponseData';
 
+import {BalanceRequestData} from '../domain/methods/balance/BalanceRequestData';
+import {BalanceResponseData} from '../domain/methods/balance/BalanceResponseData';
 
+import {ChargeRequestData} from '../domain/methods/charge/ChargeRequestData';
+import {ChargeResponseData} from '../domain/methods/charge/ChargeResponseData';
 
+import {CreateAccountRequestData} from '../domain/methods/createaccount/CreateAccountRequestData';
+import {CreateAccountResponseData} from '../domain/methods/createaccount/CreateAccountResponseData';
 
-export  class TrustlyApiClient extends JavaObject implements java.io.Closeable {
+import {RegisterAccountRequestData} from '../domain/methods/registeraccount/RegisterAccountRequestData';
+import {RegisterAccountResponseData} from '../domain/methods/registeraccount/RegisterAccountResponseData';
 
-  private static readonly STATIC_REGISTERED_CLIENTS:  java.util.List<TrustlyApiClient> | null = new  java.util.ArrayList();
+import {RegisterAccountPayoutRequestData} from '../domain/methods/registeraccountpayout/RegisterAccountPayoutRequestData';
+import {RegisterAccountPayoutResponseData} from '../domain/methods/registeraccountpayout/RegisterAccountPayoutResponseData';
 
-  private static readonly AVAILABLE_HTTP_REQUESTERS:  HttpRequesterLoader[] | null =  [
-    new  ApacheHttpClient5HttpRequesterLoader(),
-    new  ApacheHttpClient4HttpRequesterLoader(),
-    new  ApacheHttpClient3HttpRequesterLoader(),
-    new  JavaUrlConnectionHttpRequesterLoader()
+import {SettlementReportRequestData} from '../domain/methods/settlementreport/SettlementReportRequestData';
+import {SettlementReportResponseData} from '../domain/methods/settlementreport/SettlementReportResponseData';
+
+import {CreditNotificationData} from '../domain/notifications/CreditNotificationData';
+import {CancelNotificationData} from '../domain/notifications/CancelNotificationData';
+import {AccountNotificationData} from '../domain/notifications/AccountNotificationData';
+import {UnknownNotificationData} from '../domain/notifications/UnknownNotificationData';
+import {PendingNotificationData} from '../domain/notifications/PendingNotificationData';
+import {PayoutConfirmationNotificationData} from '../domain/notifications/PayoutConfirmationNotificationData';
+import {DebitNotificationData} from '../domain/notifications/DebitNotificationData';
+
+import {IToTrustlyRequestParams} from '../domain/base/IToTrustlyRequestParams';
+import {IResponseResultData} from '../domain/base/IResponseResultData';
+import {IRequestParamsData} from '../domain/base/IRequestParamsData';
+
+import {TrustlyValidationException} from '../domain/exceptions/TrustlyValidationException';
+import {TrustlyErrorResponseException} from '../domain/exceptions/TrustlyErrorResponseException';
+import {TrustlyRejectionException} from '../domain/exceptions/TrustlyRejectionException';
+import {TrustlySignatureException} from '../domain/exceptions/TrustlySignatureException';
+import {TrustlyRequestException} from '../domain/exceptions/TrustlyRequestException';
+
+import {JsonRpcRequest} from '../domain/base/JsonRpcRequest';
+import {JsonRpcResponse, JsonRpcResponseWithResult} from '../domain/base/JsonRpcResponse';
+
+import {TrustlyStringUtils} from '../util/TrustlyStringUtils';
+
+import {IWithRejectionResult} from '../domain/base/IWithRejectionResult';
+import {WithdrawResponseData} from '../domain/methods/withdraw/WithdrawResponseData';
+import {WithdrawRequestData} from '../domain/methods/withdraw/WithdrawRequestData';
+import {CancelChargeResponseData} from '../domain/methods/cancelcharge/CancelChargeResponseData';
+import {CancelChargeRequestData} from '../domain/methods/cancelcharge/CancelChargeRequestData';
+import {SelectAccountResponseData} from '../domain/methods/selectaccount/SelectAccountResponseData';
+import {SelectAccountRequestData} from '../domain/methods/selectaccount/SelectAccountRequestData';
+import {RefundResponseData} from '../domain/methods/refund/RefundResponseData';
+import {RefundRequestData} from '../domain/methods/refund/RefundRequestData';
+import {DepositResponseData} from '../domain/methods/deposit/DepositResponseData';
+import {DepositRequestData} from '../domain/methods/deposit/DepositRequestData';
+import {GetWithdrawalsResponseData} from '../domain/methods/getwithdrawals/GetWithdrawalsResponseData';
+import {GetWithdrawalsRequestData} from '../domain/methods/getwithdrawals/GetWithdrawalsRequestData';
+import {WithoutSignature} from '../domain/base/modifiers/WithoutSignature';
+
+import {NotificationEvent} from './NotificationEvent';
+import {NotificationRequest} from '../domain/base/NotificationRequest';
+
+import {NotificationArgs, NotificationFailHandler, NotificationOkHandler} from './NotificationArgs';
+import {TrustlyNoNotificationListenerException} from '../domain/exceptions/TrustlyNoNotificationListenerException';
+import {WithoutProvidedProperties} from "../domain/base/modifiers/WithoutProvidedProperties";
+
+enum DataClass {
+  PLACEHOLDER
+}
+
+interface NotificationMeta<D extends IFromTrustlyRequestData> {
+
+  dataClass: DataClass;
+  listeners: NotificationEvent<D>[];
+}
+
+export class TrustlyApiClient {
+
+  private static readonly STATIC_REGISTERED_CLIENTS: TrustlyApiClient[] = [];
+
+  private static readonly AVAILABLE_HTTP_REQUESTERS: HttpRequesterLoader[] = [
+    new NodeJsHttpRequesterLoader(),
   ];
 
-  private static getFirstAvailableHttpRequester():  HttpRequester | null {
+  private static getFirstAvailableHttpRequester(): HttpRequester {
 
-    let  foundHttpRequester: HttpRequester = null;
-    for (let loader of TrustlyApiClient.AVAILABLE_HTTP_REQUESTERS) {
+    let foundHttpRequester: HttpRequester | undefined = undefined;
+    for (const loader of TrustlyApiClient.AVAILABLE_HTTP_REQUESTERS) {
 
       foundHttpRequester = loader.create();
       if (foundHttpRequester !== null) {
@@ -28,100 +112,53 @@ export  class TrustlyApiClient extends JavaObject implements java.io.Closeable {
       }
     }
 
-    if (foundHttpRequester === null) {
-      throw new  java.lang.IllegalStateException("Could not find a suitable http requester factory");
+    if (!foundHttpRequester) {
+      throw new Error('Could not find a suitable http requester factory');
     }
 
     return foundHttpRequester;
   }
 
-  public static NotificationMeta =  class NotificationMeta<D extends IFromTrustlyRequestData> extends JavaObject {
+  private readonly settings: TrustlyApiClientSettingsData;
 
-    protected dataClass: java.lang.Class<D> | null;
-    protected listeners: java.util.List<NotificationEvent<D>> | null = new  java.util.ArrayList();
-  };
+  private readonly objectFactory: JsonRpcFactory = new JsonRpcFactory();
+  private readonly signer: JsonRpcSigner;
+  private readonly validator: JsonRpcValidator = new JsonRpcValidator();
+  private readonly httpRequester: HttpRequester;
 
+  private readonly onNotification: Map<string, NotificationMeta<IFromTrustlyRequestData>> = new Map();
 
-  private readonly settings:  TrustlyApiClientSettings | null;
-
-  private readonly objectMapper:  ObjectMapper | null = new  ObjectMapper();
-  private readonly objectFactory:  JsonRpcFactory | null = new  JsonRpcFactory();
-  private readonly signer:  JsonRpcSigner | null;
-  private readonly validator:  JsonRpcValidator | null = new  JsonRpcValidator();
-  private readonly httpRequester:  HttpRequester | null;
-
-  private readonly onNotification:  java.util.Map<string, TrustlyApiClient.NotificationMeta< IFromTrustlyRequestData>> | null = new  java.util.HashMap();
-
-  public getSettings():  TrustlyApiClientSettings | null {
+  public getSettings(): TrustlyApiClientSettingsData {
     return this.settings;
   }
 
-  public constructor(settings: TrustlyApiClientSettings| null);
+  constructor(settings: TrustlyApiClientSettingsData, signer?: JsonRpcSigner, httpRequester?: HttpRequester) {
 
-  public constructor(settings: TrustlyApiClientSettings| null, signer: JsonRpcSigner| null);
+    if (!signer) {
+      signer = new DefaultJsonRpcSigner(new Serializer(), settings);
+    }
 
-  public constructor(settings: TrustlyApiClientSettings| null, httpRequester: HttpRequester| null);
+    if (!httpRequester) {
+      httpRequester = TrustlyApiClient.getFirstAvailableHttpRequester();
+    }
 
-  public constructor(settings: TrustlyApiClientSettings| null, signer: JsonRpcSigner| null, httpRequester: HttpRequester| null);
-    public constructor(...args: unknown[]) {
-		switch (args.length) {
-			case 1: {
-				const [settings] = args as [TrustlyApiClientSettings];
-
-
-    this(settings, new  DefaultJsonRpcSigner(new  Serializer(), settings), TrustlyApiClient.getFirstAvailableHttpRequester());
-  
-
-				break;
-			}
-
-			case 2: {
-				const [settings, signer] = args as [TrustlyApiClientSettings, JsonRpcSigner];
-
-
-    this(settings, signer, TrustlyApiClient.getFirstAvailableHttpRequester());
-  
-
-				break;
-			}
-
-			case 2: {
-				const [settings, httpRequester] = args as [TrustlyApiClientSettings, HttpRequester];
-
-
-    this(settings, new  DefaultJsonRpcSigner(new  Serializer(), settings), httpRequester);
-  
-
-				break;
-			}
-
-			case 3: {
-				const [settings, signer, httpRequester] = args as [TrustlyApiClientSettings, JsonRpcSigner, HttpRequester];
-
-
-    super();
-this.settings = settings;
+    this.settings = settings;
     this.signer = signer;
     this.httpRequester = httpRequester;
 
-    TrustlyApiClient.STATIC_REGISTERED_CLIENTS.add(this);
-  
-
-				break;
-			}
-
-			default: {
-				throw new java.lang.IllegalArgumentException(S`Invalid number of arguments`);
-			}
-		}
-	}
-
-
-  public close():  void {
-    TrustlyApiClient.STATIC_REGISTERED_CLIENTS.remove(this);
+    TrustlyApiClient.STATIC_REGISTERED_CLIENTS.push(this);
   }
 
-  public static getRegisteredClients():  java.lang.Iterable<TrustlyApiClient> | null {
+  public close(): void {
+    const idx = TrustlyApiClient.STATIC_REGISTERED_CLIENTS.indexOf(this);
+    if (idx !== -1) {
+      TrustlyApiClient.STATIC_REGISTERED_CLIENTS.splice(idx, 1);
+    } else {
+      throw new Error(`The closed client was not included among the registered clients`);
+    }
+  }
+
+  public static getRegisteredClients(): TrustlyApiClient[] {
     return TrustlyApiClient.STATIC_REGISTERED_CLIENTS;
   }
 
@@ -135,14 +172,14 @@ this.settings = settings;
    * <p>
    * Only settled transactions are included.
    */
-  public accountLedger(request: AccountLedgerRequestData| null):  AccountLedgerResponseData | null {
-    return this.sendRequest(request, AccountLedgerResponseData.class, "AccountLedger", null);
+  public accountLedger(request: WithoutProvidedProperties<AccountLedgerRequestData>): Promise<AccountLedgerResponseData> {
+    return this.sendRequest<AccountLedgerResponseData>(request, 'AccountLedger');
   }
 
   /**
    * This method is used by merchants to transfer money to their customer's bank accounts.
    * <p>
-   * The merchant specifies the receiving bank account in {@link AccountPayoutRequestData#setAccountId}, which is a unique identifier
+   * The merchant specifies the receiving bank account in {@link AccountPayoutRequestData#accountId}, which is a unique identifier
    * generated by Trustly.
    * <p>
    * The merchant can get the {@code AccountID} from {@link NotificationRequest}&lt;{@link AccountNotificationData}&gt; which is sent after
@@ -156,10 +193,10 @@ this.settings = settings;
    * <p>
    * <h2>Example flow 1: SelectAccount + AccountPayout</h2>
    * <ol>
-   *   <li>The merchant makes an API-call to {@link TrustlyApiClient#selectAccount} and redirects the end-user to {@link SelectAccountResponseData#getUrl()}.</li>
+   *   <li>The merchant makes an API-call to {@link TrustlyApiClient#selectAccount} and redirects the end-user to {@link SelectAccountResponseData#url}.</li>
    *   <li>The end-user logs in to their bank and selects their bank account.</li>
    *   <li>Trustly sends an {@link NotificationRequest}&lt;{@link AccountNotificationData}&gt; to the merchant's system with an {@code AccountID} for the selected account.</li>
-   *   <li>The merchant makes an API-call using this method with the {@link AccountPayoutRequestData#setAmount} and {@link AccountPayoutRequestData#setCurrency} to transfer.</li>
+   *   <li>The merchant makes an API-call using this method with the {@link AccountPayoutRequestData#amount} and {@link AccountPayoutRequestData#currency} to transfer.</li>
    *   <li>Trustly's API replies with a synchronous response to let the merchant know that the AccountPayout request was received.</li>
    *   <li>
    *     A {@link NotificationRequest}&lt;{@link PayoutConfirmationNotificationData}&gt; is sent to the merchant when the transfer has been confirmed.
@@ -173,8 +210,8 @@ this.settings = settings;
    * <h2>Example flow 2: RegisterAccount + AccountPayout</h2>
    * <ol>
    *   <li>The merchant makes an API-call to {@link TrustlyApiClient#registerAccount} method with the recipient's bank account details.</li>
-   *   <li>Trustly's {@link TrustlyApiClient#registerAccount} API responds with {@link RegisterAccountResponseData#getAccountId()} of the recipient's account.</li>
-   *   <li>The merchant makes an API-call to this method with the {@link AccountPayoutRequestData#setAmount} and {@link AccountPayoutRequestData#setCurrency} to transfer.</li>
+   *   <li>Trustly's {@link TrustlyApiClient#registerAccount} API responds with {@link RegisterAccountResponseData#accountId} of the recipient's account.</li>
+   *   <li>The merchant makes an API-call to this method with the {@link AccountPayoutRequestData#amount} and {@link AccountPayoutRequestData#currency} to transfer.</li>
    *   <li>Trustly's API replies with a synchronous response to let the merchant know that the AccountPayout request was received.</li>
    *   <li>
    *     A {@link NotificationRequest}&lt;{@link PayoutConfirmationNotificationData}&gt; is sent to the merchant when the transfer has been confirmed.
@@ -187,16 +224,16 @@ this.settings = settings;
    *   </li>
    * </ol>
    */
-  public accountPayout(request: AccountPayoutRequestData| null):  AccountPayoutResponseData | null {
-    return this.sendRequest(request, AccountPayoutResponseData.class, "AccountPayout", null);
+  public accountPayout(request: WithoutProvidedProperties<AccountPayoutRequestData>): Promise<AccountPayoutResponseData> {
+    return this.sendRequest<AccountPayoutResponseData>(request, 'AccountPayout');
   }
 
   /**
    * Approves a withdrawal prepared by the user. Please contact your integration manager at Trustly if you want to enable automatic approval
    * of the withdrawals.
    */
-  public approveWithdrawal(request: ApproveWithdrawalRequestData| null):  ApproveWithdrawalResponseData | null {
-    return this.sendRequest(request, ApproveWithdrawalResponseData.class, "ApproveWithdrawal", null);
+  public approveWithdrawal(request: WithoutProvidedProperties<ApproveWithdrawalRequestData>): Promise<ApproveWithdrawalResponseData> {
+    return this.sendRequest<ApproveWithdrawalResponseData>(request, 'ApproveWithdrawal');
   }
 
   /**
@@ -204,29 +241,29 @@ this.settings = settings;
    * <p>
    * 🚧 Please do not use this method more than once every 15 minutes.
    */
-  public balance(request: BalanceRequestData| null):  BalanceResponseData | null {
-    return this.sendRequest(request, BalanceResponseData.class, "Balance", null);
+  public balance(request: WithoutProvidedProperties<BalanceRequestData>): Promise<BalanceResponseData> {
+    return this.sendRequest<BalanceResponseData>(request, 'Balance');
   }
 
   /**
-   * For {@link TrustlyApiClient#charge} requests that have a future {@link ChargeRequestDataAttributes#setPaymentDate}, it’s possible to
+   * For {@link TrustlyApiClient#charge} requests that have a future {@link ChargeRequestDataAttributes#paymentDate}, it’s possible to
    * cancel the Charge up until 18:30 on the {@code PaymentDate}.
    * <p>
    * A {@code Charge} request that doesn’t have any {@code PaymentDate} specified cannot be canceled. It’s also not possible to cancel a
    * {@code Charge} request if the {@code PaymentDate} is equal to the date when {@code Charge} request was sent.
    */
-  public cancelCharge(request: CancelChargeRequestData| null):  CancelChargeResponseData | null {
-    return this.sendRequest(request, CancelChargeResponseData.class, "CancelCharge", null);
+  public cancelCharge(request: WithoutProvidedProperties<CancelChargeRequestData>): Promise<CancelChargeResponseData> {
+    return this.sendRequest<CancelChargeResponseData>(request, 'CancelCharge');
   }
 
   /**
-   * Charges a specific {@link ChargeRequestData#setAccountId} using direct debit.
+   * Charges a specific {@link ChargeRequestData#accountId} using direct debit.
    * <p>
-   * A previously approved direct debit mandate must exist on the {@link ChargeRequestData#setAccountId} (see
+   * A previously approved direct debit mandate must exist on the {@link ChargeRequestData#accountId} (see
    * {@link TrustlyApiClient#selectAccount} for details).
    */
-  public charge(request: ChargeRequestData| null):  ChargeResponseData | null {
-    return this.sendRequest(request, ChargeResponseData.class, "Charge", null);
+  public charge(request: WithoutProvidedProperties<ChargeRequestData>): Promise<ChargeResponseData> {
+    return this.sendRequest<ChargeResponseData>(request, 'Charge');
   }
 
   /**
@@ -234,20 +271,20 @@ this.settings = settings;
    * <p>
    * Please contact your integration manager at Trustly if you want to enable automatic approval of the withdrawals.
    */
-  public denyWithdrawal(request: DenyWithdrawalRequestData| null):  DenyWithdrawalResponseData | null {
-    return this.sendRequest(request, DenyWithdrawalResponseData.class, "DenyWithdrawal", null);
+  public denyWithdrawal(request: WithoutProvidedProperties<DenyWithdrawalRequestData>): Promise<DenyWithdrawalResponseData> {
+    return this.sendRequest<DenyWithdrawalResponseData>(request, 'DenyWithdrawal');
   }
 
   /**
-   * This method returns {@link DepositResponseData#getUrl()} where the end-user can make a payment from their bank account.
+   * This method returns {@link DepositResponseData#url} where the end-user can make a payment from their bank account.
    * <p>
    * A typical Deposit flow is:
    * <ol>
-   *   <li>The merchant sends a Deposit API call and receives a {@link DepositResponseData#getUrl()} back from Trustly's API.</li>
-   *   <li>The merchant displays the {@link DepositResponseData#getUrl()} to the end-user (you can find more information about how to display the Trustly URL <a href="https://eu.developers.trustly.com/doc/docs/presentation-of-trustly-url">here</a>).</li>
+   *   <li>The merchant sends a Deposit API call and receives a {@link DepositResponseData#url} back from Trustly's API.</li>
+   *   <li>The merchant displays the {@link DepositResponseData#url} to the end-user (you can find more information about how to display the Trustly URL <a href="https://eu.developers.trustly.com/doc/docs/presentation-of-trustly-url">here</a>).</li>
    *   <li>The end-user selects their bank and completes the payment (in case the payment is not completed, a {@link NotificationRequest}&lt;{@link CancelNotificationData}&gt; is sent).</li>
    *   <li>
-   *     Trustly sends a {@link NotificationRequest}&lt;{@link PendingNotificationData}&gt; to the {@link DepositRequestData#setNotificationUrl} when the end-user has completed the payment process,
+   *     Trustly sends a {@link NotificationRequest}&lt;{@link PendingNotificationData}&gt; to the {@link DepositRequestData#notificationUrl} when the end-user has completed the payment process,
    *     and a {@link NotificationRequest}&lt;{@link CreditNotificationData}&gt; is sent when the payment is confirmed.
    *     When the funds have settled, they will be credited to the merchant's Trustly account balance.
    *   </li>
@@ -262,16 +299,16 @@ this.settings = settings;
    *   </li>
    * </ol>
    */
-  public deposit(request: DepositRequestData| null):  DepositResponseData | null {
-    return this.sendRequest(request, DepositResponseData.class, "Deposit", null);
+  public deposit(request: WithoutProvidedProperties<DepositRequestData>): Promise<DepositResponseData> {
+    return this.sendRequest<DepositResponseData>(request, 'Deposit');
   }
 
   /**
    * This method returns the details of a payout (works for the {@link TrustlyApiClient#withdraw}, {@link TrustlyApiClient#accountPayout}
    * and {@link TrustlyApiClient#refund} methods).
    */
-  public getWithdrawals(request: GetWithdrawalsRequestData| null):  GetWithdrawalsResponseData | null {
-    return this.sendRequest(request, GetWithdrawalsResponseData.class, "GetWithdrawals", null);
+  public getWithdrawals(request: WithoutProvidedProperties<GetWithdrawalsRequestData>): Promise<GetWithdrawalsResponseData> {
+    return this.sendRequest<GetWithdrawalsResponseData>(request, 'GetWithdrawals');
   }
 
   /**
@@ -282,12 +319,12 @@ this.settings = settings;
    * You must have sufficient funds on your merchant account to make the refund. No credit is given. If the deposit has not yet been settled
    * when the refund request is received, the refund will be queued and executed once the money for the deposit has been received.
    */
-  public refund(request: RefundRequestData| null):  RefundResponseData | null {
-    return this.sendRequest(request, RefundResponseData.class, "Refund", null);
+  public refund(request: WithoutProvidedProperties<RefundRequestData>): Promise<RefundResponseData> {
+    return this.sendRequest<RefundResponseData>(request, 'Refund');
   }
 
-  public createAccount(request: CreateAccountRequestData| null):  CreateAccountResponseData | null {
-    return this.sendRequest(request, CreateAccountResponseData.class, "CreateAccount", null);
+  public createAccount(request: WithoutProvidedProperties<CreateAccountRequestData>): Promise<CreateAccountResponseData> {
+    return this.sendRequest<CreateAccountResponseData>(request, 'CreateAccount');
   }
 
   /**
@@ -296,18 +333,18 @@ this.settings = settings;
    * You can find more information about how to display the Trustly URL <a href="https://eu.developers.trustly.com/doc/docs/service-presentation">here</a>.
    * <p>
    * When the account has been verified an account notification is immediately sent to the
-   * {@link SelectAccountRequestData#setNotificationUrl}.
+   * {@link SelectAccountRequestData#notificationUrl}.
    * <p>
    * A typical flow is:
    * <ol>
-   *   <li>The merchant makes an API-call to this method and redirects the end-user to {@link SelectAccountResponseData#getUrl()}.</li>
+   *   <li>The merchant makes an API-call to this method and redirects the end-user to {@link SelectAccountResponseData#url}.</li>
    *   <li>The end-user selects his/her bank and completes the identification process.</li>
-   *   <li>The end-user is redirected back to the merchant at {@link SelectAccountRequestDataAttributes#setSuccessUrl}. Note that the account might not be verified yet at this point.</li>
+   *   <li>The end-user is redirected back to the merchant at {@link SelectAccountRequestDataAttributes#successUrl}. Note that the account might not be verified yet at this point.</li>
    *   <li>When the account is verified, Trustly sends an account notification to the merchant's system with information about the selected account</li>
    * </ol>
    */
-  public selectAccount(request: SelectAccountRequestData| null):  SelectAccountResponseData | null {
-    return this.sendRequest(request, SelectAccountResponseData.class, "SelectAccount", null);
+  public selectAccount(request: WithoutProvidedProperties<SelectAccountRequestData>): Promise<SelectAccountResponseData> {
+    return this.sendRequest<SelectAccountResponseData>(request, 'SelectAccount');
   }
 
   /**
@@ -315,27 +352,27 @@ this.settings = settings;
    * <p>
    * A typical payout flow is:
    * <ol>
-   *   <li>The merchant makes an API-call to this method and receives an {@link RegisterAccountResponseData#getAccountId()} in response. </li>
+   *   <li>The merchant makes an API-call to this method and receives an {@link RegisterAccountResponseData#accountId} in response. </li>
    *   <li>The merchant saves the {@code accountid} as a valid payout option for the end user.</li>
    *   <li>
    *     When it's time to actually do a payout the merchant makes an API-call to
-   *     {@link TrustlyApiClient#accountPayout} with the {@link AccountPayoutRequestData#setAmount},
-   *     {@link AccountPayoutRequestData#setCurrency} and saved {@link RegisterAccountResponseData#getAccountId()}.
+   *     {@link TrustlyApiClient#accountPayout} with the {@link AccountPayoutRequestData#amount},
+   *     {@link AccountPayoutRequestData#currency} and saved {@link RegisterAccountResponseData#accountId}.
    *   </li>
    * </ol>
-   * Multiple calls to this method with the same bank account details will result in the same {@link RegisterAccountResponseData#getAccountId()} being returned.
+   * Multiple calls to this method with the same bank account details will result in the same {@link RegisterAccountResponseData#accountId} being returned.
    */
-  public registerAccount(request: RegisterAccountRequestData| null):  RegisterAccountResponseData | null {
-    return this.sendRequest(request, RegisterAccountResponseData.class, "RegisterAccount", null);
+  public registerAccount(request: WithoutProvidedProperties<RegisterAccountRequestData>): Promise<RegisterAccountResponseData> {
+    return this.sendRequest<RegisterAccountResponseData>(request, 'RegisterAccount');
   }
 
-  public registerAccountPayout(request: RegisterAccountPayoutRequestData| null):  RegisterAccountPayoutResponseData | null {
-    return this.sendRequest(request, RegisterAccountPayoutResponseData.class, "RegisterAccountPayout", null);
+  public registerAccountPayout(request: WithoutProvidedProperties<RegisterAccountPayoutRequestData>): Promise<RegisterAccountPayoutResponseData> {
+    return this.sendRequest<RegisterAccountPayoutResponseData>(request, 'RegisterAccountPayout');
   }
 
-  public settlementReport(request: SettlementReportRequestData| null):  SettlementReportResponseData | null {
-    return this.sendRequest(
-      request, SettlementReportResponseData.class, "ViewAutomaticSettlementDetailsCSV", null
+  public settlementReport(request: WithoutProvidedProperties<SettlementReportRequestData>): Promise<SettlementReportResponseData> {
+    return this.sendRequest<SettlementReportResponseData>(
+      request, 'ViewAutomaticSettlementDetailsCSV',
     );
   }
 
@@ -347,8 +384,8 @@ this.settings = settings;
    * A typical withdrawal flow is:
    *
    * <ol>
-   *   <li>The merchant sends a Withdraw API call and receives a {@link WithdrawResponseData#getUrl()} back from Trustly's API.</li>
-   *   <li>The merchant displays {@link WithdrawResponseData#getUrl()} to the end-user (you can find more information about how to display it <a href="https://eu.developers.trustly.com/doc/docs/presentation-of-trustly-url">here</a>).</li>
+   *   <li>The merchant sends a Withdraw API call and receives a {@link WithdrawResponseData#url} back from Trustly's API.</li>
+   *   <li>The merchant displays {@link WithdrawResponseData#url} to the end-user (you can find more information about how to display it <a href="https://eu.developers.trustly.com/doc/docs/presentation-of-trustly-url">here</a>).</li>
    *   <li>
    *     <span>The end-user selects the amount to withdraw and provides his/her bank account details.</span>
    *     <ul>
@@ -357,14 +394,14 @@ this.settings = settings;
    *   </li>
    *   <li>
    *     <span>
-   *       When the end-user has completed the withdrawal process using the {@link WithdrawResponseData#getUrl()},
-   *       Trustly sends a {@link NotificationRequest}&lt;{@link DebitNotificationData}&gt; to {@link WithdrawRequestData#getNotificationUrl()}.
-   *       The merchant should try to deduct the specified {@link DebitNotificationData#getAmount()} from the end-user's balance in the merchant's system.
+   *       When the end-user has completed the withdrawal process using the {@link WithdrawResponseData#url},
+   *       Trustly sends a {@link NotificationRequest}&lt;{@link DebitNotificationData}&gt; to {@link WithdrawRequestData#notificationUrl}.
+   *       The merchant should try to deduct the specified {@link DebitNotificationData#amount} from the end-user's balance in the merchant's system.
    *      </span>
    *     <ul>
-   *       <li>If the merchant is able to deduct {@link DebitNotificationData#getAmount()} from the user's balance, the debit notification response should be sent with {@code "status": "OK"}.</li>
+   *       <li>If the merchant is able to deduct {@link DebitNotificationData#amount} from the user's balance, the debit notification response should be sent with {@code "status": "OK"}.</li>
    *       <li>
-   *         If the merchant is NOT able to deduct {@link DebitNotificationData#getAmount()} from the user's balance, the debit notification response should be sent with {@code "status": "FAILED"}.
+   *         If the merchant is NOT able to deduct {@link DebitNotificationData#amount} from the user's balance, the debit notification response should be sent with {@code "status": "FAILED"}.
    *         The withdrawal is then aborted on Trustly's side and an error message is shown to the end-user. A {@link NotificationRequest}&lt;{@link CancelNotificationData}&gt; is sent to the merchant.
    *       </li>
    *     </ul>
@@ -393,8 +430,8 @@ this.settings = settings;
    *   (see more details <a href="https://eu.developers.trustly.com/doc/docs/withdraw#failed-withdrawals">here</a>).</li>
    * </ol>
    */
-  public withdraw(request: WithdrawRequestData| null):  WithdrawResponseData | null {
-    return this.sendRequest(request, WithdrawResponseData.class, "Withdraw", null);
+  public withdraw(request: WithoutProvidedProperties<WithdrawRequestData>): Promise<WithdrawResponseData> {
+    return this.sendRequest<WithdrawResponseData>(request, 'Withdraw');
   }
 
   // Notifications
@@ -404,44 +441,51 @@ this.settings = settings;
    * <p>
    * This method should only be used if there is no existing {@code addOnXyzListener} method for the notification you want.
    */
-  public addNotificationListener <D extends IFromTrustlyRequestData>(method: string| null, dataClass: java.lang.Class<D>| null,
-    listener: NotificationEvent<D>| null):  void {
+  public addNotificationListener<D extends IFromTrustlyRequestData>(method: string, listener: NotificationEvent<D>): void {
 
-    let  meta: TrustlyApiClient.NotificationMeta<D> =  this.onNotification.computeIfAbsent(method, k => new  TrustlyApiClient.NotificationMeta(dataClass)) as TrustlyApiClient.NotificationMeta<D>;
-    if (!meta.getDataClass().equals(dataClass)) {
-      throw new  java.lang.IllegalArgumentException(
-        string.format("Each notification method must be registered with the same type (%s vs %s)", dataClass, meta.getDataClass()));
+    const dataClass: DataClass | undefined = undefined;
+    let meta: NotificationMeta<D> | undefined = this.onNotification.get(method);
+    if (!meta) {
+      meta = {
+        dataClass: dataClass ?? DataClass.PLACEHOLDER,
+        listeners: [],
+      };
     }
 
-    meta.getListeners().add(listener);
+    // const meta: NotificationMeta<D> = this.onNotification.computeIfAbsent(method, k => new NotificationMeta(dataClass)) as NotificationMeta<D>;
+    if (meta.dataClass != dataClass) {
+      throw new Error(`Each notification method must be registered with the same type (${JSON.stringify(dataClass)} vs ${meta.dataClass})`);
+    }
+
+    meta.listeners.push(listener);
   }
 
-  public addOnAccountListener(listener: NotificationEvent<AccountNotificationData>| null):  void {
-    this.addNotificationListener("account", AccountNotificationData.class, listener);
+  public addOnAccountListener(listener: NotificationEvent<AccountNotificationData>): void {
+    this.addNotificationListener('account', listener);
   }
 
-  public addOnCancelListener(listener: NotificationEvent<CancelNotificationData>| null):  void {
-    this.addNotificationListener("cancel", CancelNotificationData.class, listener);
+  public addOnCancelListener(listener: NotificationEvent<CancelNotificationData>): void {
+    this.addNotificationListener('cancel', listener);
   }
 
-  public addOnCreditListener(listener: NotificationEvent<CreditNotificationData>| null):  void {
-    this.addNotificationListener("credit", CreditNotificationData.class, listener);
+  public addOnCreditListener(listener: NotificationEvent<CreditNotificationData>): void {
+    this.addNotificationListener('credit', listener);
   }
 
-  public addOnDebitListener(listener: NotificationEvent<DebitNotificationData>| null):  void {
-    this.addNotificationListener("debit", DebitNotificationData.class, listener);
+  public addOnDebitListener(listener: NotificationEvent<DebitNotificationData>): void {
+    this.addNotificationListener('debit', listener);
   }
 
-  public addOnPayoutConfirmation(listener: NotificationEvent<PayoutConfirmationNotificationData>| null):  void {
-    this.addNotificationListener("payoutconfirmation", PayoutConfirmationNotificationData.class, listener);
+  public addOnPayoutConfirmation(listener: NotificationEvent<PayoutConfirmationNotificationData>): void {
+    this.addNotificationListener('payoutconfirmation', listener);
   }
 
-  public addOnPending(listener: NotificationEvent<PendingNotificationData>| null):  void {
-    this.addNotificationListener("pending", PendingNotificationData.class, listener);
+  public addOnPending(listener: NotificationEvent<PendingNotificationData>): void {
+    this.addNotificationListener('pending', listener);
   }
 
-  public addOnUnknownNotification(listener: NotificationEvent<UnknownNotificationData>| null):  void {
-    this.addNotificationListener("", UnknownNotificationData.class, listener);
+  public addOnUnknownNotification(listener: NotificationEvent<UnknownNotificationData>): void {
+    this.addNotificationListener('', listener);
   }
 
   // Base functionality
@@ -453,18 +497,18 @@ this.settings = settings;
    * @param requestData The request data that will be used for the request
    * @param method      The method of the JsonRpc package
    * @param uuid        The UUID for the message, if null one will be generated for you.
-   * @param <T>         The type of the request data
+   * @param T           The type of the request data
    * @return The JsonRpc response data
    * @throws TrustlyValidationException Thrown if the request does not pass proper validations
    */
-  public createRequestPackage <T extends IRequestParamsData>(
-    requestData: T| null,
-    method: string| null,
-    uuid: string| null
-  ):  JsonRpcRequest<T> | null {
+  public createRequestPackage<T extends IRequestParamsData>(
+    requestData: T,
+    method: string,
+    uuid?: string,
+  ): JsonRpcRequest<T> {
 
-    let  rpcRequest: JsonRpcRequest<T> = this.objectFactory.create(requestData, method, uuid);
-    let  signedRpcRequest: JsonRpcRequest<T> = this.signer.sign(rpcRequest);
+    const rpcRequest = this.objectFactory.create(requestData, method, uuid);
+    const signedRpcRequest: JsonRpcRequest<T> = this.signer.signRequest(rpcRequest);
 
     this.validator.validate(signedRpcRequest);
 
@@ -474,31 +518,30 @@ this.settings = settings;
   /**
    * Used internally to create a response package.
    *
+   * @template R The type of the response
+   *
    * @param method       The method of the JsonRpc package
    * @param uuid         The UUID for the message, if null one will be generated for you
    * @param responseData The response data that was received remotely
-   * @param <R>          The type of the response data
-   * @return A signed and validated JsonRpc response package
+   * @returns {R}        A signed and validated JsonRpc response package
    * @throws TrustlyValidationException Thrown if the response does not pass proper validations
    */
-  public createResponsePackage <R extends IResponseResultData>(
-    method: string| null,
-    uuid: string| null,
-    responseData: R| null
-  ):  JsonRpcResponse<R> | null {
+  public createResponsePackage<R extends IResponseResultData>(
+    method: string,
+    uuid: string,
+    responseData: R,
+  ): JsonRpcResponse<R> {
 
-    let  rpcResponse: JsonRpcResponse<R> = JsonRpcResponse.<R>builder()
-      .version("1.1")
-      .result(
-        ResponseResult.<R>builder()
-          .data(responseData)
-          .method(method)
-          .uuid(uuid)
-          .build()
-      )
-      .build();
+    const unsignedRpcResponse: WithoutSignature<JsonRpcResponse<R>> = {
+      version: '1.1',
+      result: {
+        data: responseData,
+        method: method,
+        uuid: uuid,
+      },
+    };
 
-    let  signedResponse: JsonRpcResponse<R> = this.signer.sign(rpcResponse);
+    const signedResponse: JsonRpcResponse<R> = this.signer.signResponse(unsignedRpcResponse);
 
     this.validator.validate(signedResponse);
 
@@ -510,114 +553,132 @@ this.settings = settings;
    * <p>
    * Should only be used if you need to call an undocumented/newly released method that is not yet added to this library.
    */
-  public sendRequest <T extends IToTrustlyRequestParams, R extends IResponseResultData>(
-    requestData: T| null,
-    clazz: java.lang.Class<R>| null,
-    method: string| null,
-    uuid: string| null
-  ):  R | null {
+  public sendRequest<R extends IResponseResultData, T extends IToTrustlyRequestParams = IToTrustlyRequestParams>(
+    requestData: WithoutProvidedProperties<T>,
+    method: string,
+    uuid?: string,
+  ): Promise<R> {
 
     try {
-      return this.sendRequestWithSpecificExceptions(requestData, clazz, method, uuid);
+      return this.sendRequestWithSpecificExceptions(requestData, method, uuid);
     } catch (e) {
-if (e instanceof java.io.IOException || e instanceof TrustlyValidationException || e instanceof TrustlyErrorResponseException || e instanceof TrustlyRejectionException || e instanceof TrustlySignatureException) {
 
-      throw new  TrustlyRequestException(e);
-    } else {
-	throw e;
-	}
-}
+      if (e instanceof TrustlyValidationException || e instanceof TrustlyErrorResponseException || e instanceof TrustlyRejectionException || e instanceof TrustlySignatureException) {
+        throw new TrustlyRequestException(e);
+      } else {
+        throw e;
+      }
+    }
   }
 
   /**
    * Sends given request to Trustly.
    *
+   * @template T The outgoing JsonRpc request data type
+   * @template R The expected JsonRpc response data type
+   *
    * @param requestData Request to send to Trustly API
-   * @param clazz       Type of the JsonRpc response data
    * @param method      The RPC method name of the request
    * @param uuid        Optional UUID for the request. If not specified, one will be generated
-   * @param <T>         The outgoing JsonRpc request data type
-   * @param <R>         The expected JsonRpc response data type
-   * @return Response generated from the request
+   * @returns {R}       Response generated from the request
    * @throws IOException                   If the remote end could not be contacted
    * @throws TrustlyErrorResponseException If the response from Trustly contains an error body
    * @throws TrustlyRejectionException     If the request was rejected by Trustly from their server
    * @throws TrustlySignatureException     If the signature of the request or response could not be verified
    * @throws TrustlyValidationException    If the request or response could not be properly validated
    */
-  private sendRequestWithSpecificExceptions <T extends IToTrustlyRequestParams, R extends IResponseResultData>(
-    requestData: T| null,
-    clazz: java.lang.Class<R>| null,
-    method: string| null,
-    uuid: string| null
-  ):  R | null {
+  private async sendRequestWithSpecificExceptions<R extends IResponseResultData, T extends IToTrustlyRequestParams>(
+    requestData: WithoutProvidedProperties<T>,
+    method: string,
+    uuid?: string,
+  ): Promise<R> {
 
-    requestData.setUsername(this.settings.getUsername());
-    requestData.setPassword(this.settings.getPassword());
+    const requestWithGlobalProperties = {
+      ...requestData,
+      username: this.settings.username,
+      password: this.settings.password,
+    } as T;
 
-    let  rpcRequest: JsonRpcRequest<T> = this.createRequestPackage(requestData, method, uuid);
+    // requestData.username = ;
+    // requestData.password = ;
 
-    let  requestString: string = this.objectMapper.writeValueAsString(rpcRequest);
+    const rpcRequest: JsonRpcRequest<T> = this.createRequestPackage(requestWithGlobalProperties, method, uuid);
 
-    let  responseString: string = this.httpRequester.request(this.settings, requestString);
+    // TODO: Convert some fields according to special handling -- such as boolean strings ("1", "0")
+    const requestString: string = JSON.stringify(rpcRequest); // this.objectMapper.writeValueAsString(rpcRequest);
 
-    let  rpcNodeResponse: JsonNode = this.objectMapper.readTree(responseString);
-    let  javaResponseType: JavaType = this.objectMapper.getTypeFactory().constructParametricType(JsonRpcResponse.class, clazz);
-    let  rpcResponse: JsonRpcResponse<R> = this.objectMapper.readValue(responseString, javaResponseType);
+    const responseString: string = await this.httpRequester.request(this.settings, requestString);
+
+    // TODO: This needs to be validated and done in a better way. How do we know the types?
+    const rpcNodeResponse: unknown = JSON.parse(responseString); // this.objectMapper.readTree(responseString);
+    // const  javaResponseType: JavaType = this.objectMapper.getTypeFactory().constructParametricType(JsonRpcResponse.class, clazz);
+    const rpcResponse: JsonRpcResponse<R> = rpcNodeResponse as JsonRpcResponse<R>; // this.objectMapper.readValue(responseString, javaResponseType);
 
     TrustlyApiClient.assertSuccessful(rpcResponse);
     TrustlyApiClient.assertWithoutRejection(rpcResponse);
 
-    this.signer.verify(rpcResponse, rpcNodeResponse);
+    this.signer.verifyResponse(rpcResponse); //, rpcNodeResponse);
 
-    if (TrustlyStringUtils.isBlank(rpcResponse.getUUID()) || !rpcResponse.getUUID().equals(rpcRequest.getParams().getUuid())) {
-      throw new  TrustlyValidationException(
-        string.format("Incoming UUID is not valid. Expected %s but got back %s", rpcRequest.getParams().getUuid(), rpcResponse.getUUID())
-      );
+    const responseUuid = rpcResponse.result.uuid; // rpcResponse.result ?  : rpcResponse.error?.error?.uuid;
+
+    // if (rpcResponse.result) {
+    //   rpcResponse.result.uuid
+    // } else {
+    //   const name: string = rpcResponse.error.name;
+    // }
+
+    if (TrustlyStringUtils.isBlank(responseUuid) || responseUuid !== rpcRequest.params.uuid) {
+      throw new TrustlyValidationException(`Incoming UUID is not valid. Expected ${rpcRequest.params.uuid} but got back ${responseUuid}`);
     }
 
-    return rpcResponse.getResult().getData();
+    return rpcResponse.result.data;
   }
 
-  private static assertWithoutRejection <R extends IResponseResultData>(rpcResponse: JsonRpcResponse<R>| null):  void {
+  private static assertWithoutRejection<R extends IResponseResultData>(rpcResponse: JsonRpcResponse<R>): void {
 
-    if (rpcResponse.getResult().getData() instanceof IWithRejectionResult) {
-      let  rejectionResult: IWithRejectionResult =  rpcResponse.getResult().getData() as IWithRejectionResult;
+    // instanceof IWithRejectionResult
+    const obj: unknown = (rpcResponse.result?.data ?? {});
+    if (typeof obj == 'object' && obj && 'rejected' in obj) {
+      const rejectionResult = obj as IWithRejectionResult;
 
-      if (!rejectionResult.isResult()) {
+      if (!rejectionResult.result) {
 
-        let  message: string = rejectionResult.getRejected();
+        let message = rejectionResult.rejected;
         if (TrustlyStringUtils.isBlank(message)) {
-          message = "The request was rejected for an unknown reason";
+          message = 'The request was rejected for an unknown reason';
         }
 
-        throw new  TrustlyRejectionException(
-          "Received a rejection response from the Trustly API: " + message,
-          rejectionResult.getRejected()
+        throw new TrustlyRejectionException(
+          `Received a rejection response from the Trustly API: ${message ?? ''}`,
+          rejectionResult.rejected,
         );
       }
     }
   }
 
-  private static assertSuccessful <R extends IResponseResultData>(rpcResponse: JsonRpcResponse<R>| null):  void {
+  private static assertSuccessful<D extends IResponseResultData>(rpcResponse: JsonRpcResponse<D>): asserts rpcResponse is JsonRpcResponseWithResult<D> {
 
-    if (!rpcResponse.isSuccessfulResult()) {
+    if (rpcResponse.error || !rpcResponse.result) {
 
-      let  message: string = null;
-      if (rpcResponse.getError() !== null) {
-        message = rpcResponse.getError().getMessage();
+      let message: string | undefined;
+      if (rpcResponse.error) {
+        message = rpcResponse.error.message;
         if (TrustlyStringUtils.isBlank(message)) {
-          message = rpcResponse.getError().getName();
+          message = rpcResponse.error.name;
           if (TrustlyStringUtils.isBlank(message)) {
-            message = ("" + rpcResponse.getError().getCode());
+            message = `${(rpcResponse.error.code ?? -1)}`;
           }
         }
       }
 
-      throw new  TrustlyErrorResponseException(string.format("Received an error response from the Trustly API: %s", message), null,
-                                              rpcResponse.getError()
-      );
+      const fullMessage = `Received an error response from the Trustly API: ${message ?? ''}`;
+      throw new TrustlyErrorResponseException(fullMessage, undefined, rpcResponse.error);
     }
+
+    // if (!rpcResponse.isSuccessfulResult()) {
+    //
+    //
+    // }
   }
 
   /**
@@ -645,107 +706,78 @@ if (e instanceof java.io.IOException || e instanceof TrustlyValidationException 
    * @throws TrustlyValidationException If the response data could not be properly validated.
    * @throws TrustlySignatureException If the signature of the response could not be properly verified.
    */
-  public handleNotification(
-    jsonString: string| null,
-    onOK: NotificationOkHandler| null,
-    onFailed: NotificationFailHandler| null
-  ):  void;
+  public handleNotification<D extends IFromTrustlyRequestData>(
+    jsonString: string,
+    // meta: NotificationMeta<D>,
+    onOK?: NotificationOkHandler,
+    onFailed?: NotificationFailHandler,
+  ): void {
 
-  private handleNotification <D extends IFromTrustlyRequestData>(
-    jsonString: string| null,
-    meta: TrustlyApiClient.NotificationMeta<D>| null,
-    onOK: NotificationOkHandler| null,
-    onFailed: NotificationFailHandler| null
-  ):  void;
-public handleNotification(...args: unknown[]):  void {
-		switch (args.length) {
-			case 3: {
-				const [jsonString, onOK, onFailed] = args as [string, NotificationOkHandler, NotificationFailHandler];
+    const jsonToken = JSON.parse(jsonString) as Record<string, unknown>; // this.objectMapper.readTree(jsonString);
+    let methodValue: string;
+    if ('method' in jsonToken && typeof jsonToken.method == 'string') {
+      methodValue = jsonToken.method;
+    } else {
+      methodValue = '';
+    }
 
+    // const methodValue: string = `${jsonToken['method']}`.toLowerCase(); // .at('/method').asText('').toLowerCase();
 
-
-    let  jsonToken: JsonNode = this.objectMapper.readTree(jsonString);
-    let  methodValue: string = jsonToken.at("/method").asText("").toLowerCase(java.util.Locale.ROOT);
-
-    let  mapper: TrustlyApiClient.NotificationMeta< IFromTrustlyRequestData> = this.onNotification.get(methodValue);
-
-    if (mapper === null || mapper.getListeners().isEmpty()) {
-      java.lang.Math.log.warn(string.format("There is no listener for incoming notification '%s'. Will fallback on 'unknown' listener", methodValue));
-      mapper = this.onNotification.get("");
-      if (mapper === null || mapper.getListeners().isEmpty()) {
-        throw new  TrustlyNoNotificationListenerException(string.format("There is no listener for incoming notification '%s' nor unknown", methodValue));
+    let meta = this.onNotification.get(methodValue);
+    if (!meta || meta.listeners.length == 0) {
+      console.log(`There is no listener for incoming notification '${methodValue}'. Will fallback on 'unknown' listener`);
+      meta = this.onNotification.get('');
+      if (!meta || meta.listeners.length == 0) {
+        throw new TrustlyNoNotificationListenerException(`There is no listener for incoming notification '${methodValue}' nor unknown`);
       }
     }
 
-    this.handleNotification(jsonString, mapper, onOK, onFailed);
-  
+    // const [jsonString, meta, onOK, onFailed] = args as [string, TrustlyApiClient.NotificationMeta<D>, NotificationOkHandler, NotificationFailHandler];
 
-				break;
-			}
-
-			case 4: {
-				const [jsonString, meta, onOK, onFailed] = args as [string, TrustlyApiClient.NotificationMeta<D>, NotificationOkHandler, NotificationFailHandler];
-
-
-
-    let  javaRequestType: JavaType = this.objectMapper.getTypeFactory().constructParametricType(NotificationRequest.class, meta.getDataClass());
-    let  rpcRequest: NotificationRequest<D> = this.objectMapper.readValue(jsonString, javaRequestType);
+    // const javaRequestType: JavaType = this.objectMapper.getTypeFactory().constructParametricType(NotificationRequest.class, meta.getDataClass());
+    // const rpcRequest: NotificationRequest<D> = this.objectMapper.readValue(jsonString, javaRequestType);
+    // TODO: There needs to be special consideration for some fields here, like the string booleans
+    const rpcRequest: NotificationRequest<D> = JSON.parse(jsonString) as NotificationRequest<D>;
 
     // Verify the notification (RpcRequest from Trustly) signature.
     try {
-      this.signer.verify(rpcRequest);
+      this.signer.verifyRequest(rpcRequest);
     } catch (ex) {
-if (ex instanceof TrustlySignatureException) {
-      throw new  TrustlySignatureException(
-        "Could not validate signature of notification from Trustly. Is the public key for Trustly the correct one, for test or production?",
-        ex
-      );
-    } else {
-	throw ex;
-	}
-}
+      if (ex instanceof TrustlySignatureException) {
+        const msg = 'Could not validate signature of notification from Trustly. Is the public key for Trustly the correct one, for test or production?';
+        throw new TrustlySignatureException(msg, ex);
+      } else {
+        throw ex;
+      }
+    }
 
     // Validate the incoming request instance.
     // Most likely this will do nothing, since we are lenient on things sent from Trustly server.
     // But we do this in case anything is needed to be validated on the local domain classes in the future.
     this.validator.validate(rpcRequest);
 
-    let  args: NotificationArgs<D> = new  NotificationArgs(
-      rpcRequest.getParams().getData(),
-      rpcRequest.getMethod(),
-      rpcRequest.getParams().getUuid(),
-      onOK, onFailed
+    const args: NotificationArgs<D> = new NotificationArgs(
+      rpcRequest.params.data,
+      rpcRequest.method,
+      rpcRequest.params.uuid,
+      onOK,
+      onFailed,
     );
 
     try {
 
-      for (let listener of meta.getListeners()) {
+      for (const listener of meta.listeners) {
         listener.onNotification(args);
       }
     } catch (ex) {
-if (ex instanceof java.lang.Exception) {
-      let  message: string = this.settings.isIncludeExceptionMessageInNotificationResponse() ? ex.getMessage() : null;
-      onFailed.handle(rpcRequest.getMethod(), rpcRequest.getParams().getUuid(), message);
-    } else {
-	throw ex;
-	}
+
+      const message = this.settings.includeExceptionMessageInNotificationResponse
+        ? ((ex instanceof Error) ? ex.message : JSON.stringify(ex))
+        : '';
+
+      if (onFailed) {
+        onFailed(rpcRequest.method, rpcRequest.params.uuid, message);
+      }
+    }
+  }
 }
-  
-
-				break;
-			}
-
-			default: {
-				throw new java.lang.IllegalArgumentException(S`Invalid number of arguments`);
-			}
-		}
-	}
-
-}
-
-// eslint-disable-next-line @typescript-eslint/no-namespace, no-redeclare
-export namespace TrustlyApiClient {
-	export type NotificationMeta<DextendsIFromTrustlyRequestData> = InstanceType<typeof TrustlyApiClient.NotificationMeta<DextendsIFromTrustlyRequestData>>;
-}
-
-

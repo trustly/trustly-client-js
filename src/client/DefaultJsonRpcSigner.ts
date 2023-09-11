@@ -1,4 +1,4 @@
-import {TrustlyApiClientSettings} from './TrustlyApiClientSettings';
+import {TrustlyApiClientSettingsData} from './TrustlyApiClientSettings';
 import {Serializer} from './Serializer';
 import {JsonRpcRequest} from '../domain/base/JsonRpcRequest';
 import {IRequestParamsData} from '../domain/base/IRequestParamsData';
@@ -9,7 +9,7 @@ import {IData} from '../domain/base/IData';
 import {IRequest} from '../domain/base/IRequest';
 import {IRequestParams} from '../domain/base/IRequestParams';
 import {TrustlyStringUtils} from '../util/TrustlyStringUtils';
-import {WithoutSignature} from '../domain/base/WithoutSignature';
+import {WithoutSignature} from '../domain/base/modifiers/WithoutSignature';
 import * as crypto from 'crypto';
 
 export class DefaultJsonRpcSigner implements JsonRpcSigner {
@@ -17,9 +17,9 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
   public static readonly SHA1_WITH_RSA: string = 'SHA1withRSA';
 
   private readonly serializer: Serializer;
-  private readonly settings: TrustlyApiClientSettings;
+  private readonly settings: TrustlyApiClientSettingsData;
 
-  public constructor(serializer: Serializer, settings: TrustlyApiClientSettings) {
+  public constructor(serializer: Serializer, settings: TrustlyApiClientSettingsData) {
     this.serializer = serializer;
     this.settings = settings;
   }
@@ -76,7 +76,7 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
 
     const sign = crypto.createSign('SHA1withRSA'); // RSA-SHA256
     sign.update(plainText);  // data from your file would go here
-    return sign.sign(this.settings.getClientPrivateKey(), 'base64');
+    return sign.sign(this.settings.clientPrivateKey, 'base64');
   }
 
   public verifyRequest<D extends IRequestParamsData, P extends IRequestParams<D>>(request: IRequest<P>): void {
@@ -120,7 +120,7 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
     const verify = crypto.createVerify('SHA1withRSA'); // RSA-SHA256
     verify.update(responsePlainText);  // data from your file would go here
 
-    if (!verify.verify(this.settings.getTrustlyPublicKey(), expectedSignature)) {
+    if (!verify.verify(this.settings.trustlyPublicKey, expectedSignature)) {
       throw new Error(`Could not verify the response`);
     }
   }

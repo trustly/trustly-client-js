@@ -5,16 +5,16 @@ import * as process from 'process';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as cert_trustly_test from '../../resources/keys/trustly_test_public.pem';
-import * as cert_trustly_prod from '../../resources/keys/trustly_live_public.pem';
+import cert_trustly_test from '../../resources/keys/trustly_test_public.pem';
+import cert_trustly_prod from '../../resources/keys/trustly_live_public.pem';
 
 export interface TrustlyApiClientSettingsData {
 
   url: string;
 
-  username: string | null;
+  username: string;
 
-  password: string | null;
+  password: string;
 
   clientPublicKey: crypto.KeyObject;
 
@@ -150,47 +150,7 @@ export class TrustlyApiClientSettings {
     return os.homedir();
   }
 
-  // private static readerToPemObject(is: java.io.InputStream | null): PemObject {
-  //
-  //   // This holds the final error to throw (if any).
-  //   let error: java.lang.Throwable | undefined;
-  //
-  //   const publicReader: java.io.InputStreamReader = new java.io.InputStreamReader(is);
-  //   try {
-  //     try {
-  //
-  //       const publicPemParser: PemReader = new PemReader(publicReader);
-  //       return publicPemParser.readPemObject();
-  //     } finally {
-  //       error = closeResources([publicReader]);
-  //     }
-  //   } catch (e) {
-  //     error = handleResourceError(e, error);
-  //   } finally {
-  //     throwResourceError(error);
-  //   }
-  // }
-
   static streamToJavaPublicKey(content: crypto.KeyLike | crypto.PublicKeyInput | undefined, filename?: string): crypto.KeyObject {
-
-    // TODO: Replace by reading files into a string and then giving it to withCertificatesFromContent
-
-    // let content: Int8Array;
-    // if (filename !== null && filename.toLowerCase(java.util.Locale.ROOT).endsWith('.der')) {
-    //
-    //   const bufferSize: int = 1024;
-    //   const buffer: Int8Array = new Array<number>(bufferSize);
-    //   const baos: java.io.ByteArrayOutputStream = new java.io.ByteArrayOutputStream();
-    //   for (let numRead: int; (numRead = is.read(buffer, 0, buffer.length)) > 0;) {
-    //     baos.write(buffer, 0, numRead);
-    //   }
-    //
-    //   content = baos.toByteArray();
-    //
-    // } else {
-    //   const publicObject: PemObject = TrustlyApiClientSettings.readerToPemObject(is);
-    //   content = publicObject.getContent();
-    // }
 
     if (!content && filename) {
       content = fs.readFileSync(filename);
@@ -201,50 +161,9 @@ export class TrustlyApiClientSettings {
     }
 
     return crypto.createPublicKey(content);
-
-    // const spec: java.security.spec.X509EncodedKeySpec = new java.security.spec.X509EncodedKeySpec(content);
-    //
-    // try {
-    //
-    //   if (java.security.Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) === null) {
-    //     java.security.Security.addProvider(new BouncyCastleProvider());
-    //   }
-    //
-    //   const factory: java.security.KeyFactory = java.security.KeyFactory.getInstance('RSA', BouncyCastleProvider.PROVIDER_NAME);
-    //   return factory.generatePublic(spec);
-    // } catch (e) {
-    //   if (e instanceof java.security.NoSuchAlgorithmException) {
-    //     throw new java.io.IOException('Could not find the required algorithm', e);
-    //   } else if (e instanceof java.security.spec.InvalidKeySpecException) {
-    //     throw new java.io.IOException('Could not load the public key because of an invalid key spec', e);
-    //   } else if (e instanceof java.security.NoSuchProviderException) {
-    //     throw new java.io.IOException('Could not find the BouncyCastle key provider', e);
-    //   } else {
-    //     throw e;
-    //   }
-    // }
   }
 
   static streamToJavaPrivateKey(content: string | crypto.PrivateKeyInput | Buffer | undefined, filename?: string): crypto.KeyObject {
-
-    // TODO: Replace by reading files into a string and then giving it to withCertificatesFromContent
-
-    // let content: Int8Array;
-    // if (filename !== null && filename.toLowerCase(java.util.Locale.ROOT).endsWith('.der')) {
-    //
-    //   const bufferSize: int = 1024;
-    //   const buffer: Int8Array = new Array<number>(bufferSize);
-    //   const baos: java.io.ByteArrayOutputStream = new java.io.ByteArrayOutputStream();
-    //   for (let numRead: int; (numRead = is.read(buffer, 0, buffer.length)) > 0;) {
-    //     baos.write(buffer, 0, numRead);
-    //   }
-    //
-    //   content = baos.toByteArray();
-    //
-    // } else {
-    //   const publicObject: PemObject = TrustlyApiClientSettings.readerToPemObject(is);
-    //   content = publicObject.getContent();
-    // }
 
     if (!content && filename) {
       content = fs.readFileSync(filename);
@@ -255,28 +174,6 @@ export class TrustlyApiClientSettings {
     }
 
     return crypto.createPrivateKey(content);
-
-    // const spec: java.security.spec.PKCS8EncodedKeySpec = new java.security.spec.PKCS8EncodedKeySpec(content);
-    //
-    // try {
-    //
-    //   if (java.security.Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) === null) {
-    //     java.security.Security.addProvider(new BouncyCastleProvider());
-    //   }
-    //
-    //   const factory: java.security.KeyFactory = java.security.KeyFactory.getInstance('RSA', BouncyCastleProvider.PROVIDER_NAME);
-    //   return factory.generatePrivate(spec);
-    // } catch (e) {
-    //   if (e instanceof java.security.NoSuchAlgorithmException) {
-    //     throw new java.io.IOException('Could not find the required algorithm', e);
-    //   } else if (e instanceof java.security.spec.InvalidKeySpecException) {
-    //     throw new java.io.IOException('Could not load the public key because of an invalid key spec', e);
-    //   } else if (e instanceof java.security.NoSuchProviderException) {
-    //     throw new java.io.IOException('Could not find the BouncyCastle key provider', e);
-    //   } else {
-    //     throw e;
-    //   }
-    // }
   }
 }
 
@@ -293,13 +190,11 @@ export class TrustlyApiClientSettingsWithEnvironment {
    */
   withoutCredentials(): TrustlyApiClientSettingsWithCredentials {
     return new TrustlyApiClientSettingsWithCredentials({
-      ...this.settings,
-      username: null,
-      password: null
+      ...this.settings
     });
   }
 
-  withCredentials(username: string | null, password: string | null): TrustlyApiClientSettingsWithCredentials {
+  withCredentials(username: string, password: string): TrustlyApiClientSettingsWithCredentials {
     return new TrustlyApiClientSettingsWithCredentials({
       ...this.settings,
       username: username,
@@ -338,28 +233,26 @@ export class TrustlyApiClientSettingsWithEnvironment {
   }
 
   withCredentialsFromUserHome(
-    clientUsernameFileName?: string | undefined,
-    clientPasswordFileName?: string,
+    clientUsernameFileName = 'trustly_client_username.txt',
+    clientPasswordFileName = 'trustly_client_password.txt',
   ): TrustlyApiClientSettingsWithCredentials {
 
-    const directory: string = TrustlyApiClientSettings.getUserHome();
-
-    try {
-      return this.withCredentialsFromDirectory(directory, clientUsernameFileName, clientPasswordFileName);
-    } catch (ex) {
-      throw new Error(`Could not load credentials from user home: ${JSON.stringify(ex)}`);
-    }
+    return this.withCredentialsFromDirectory(
+      TrustlyApiClientSettings.getUserHome(),
+      clientUsernameFileName,
+      clientPasswordFileName
+    );
   }
 
   withCredentialsFromDirectory(
-    directoryPath: string,
-    clientUsernameFileName?: string | undefined,
-    clientPasswordFileName?: string,
+    directoryPath = TrustlyApiClientSettings.getUserHome(),
+    clientUsernameFileName = 'trustly_client_username.txt',
+    clientPasswordFileName = 'trustly_client_password.txt',
   ): TrustlyApiClientSettingsWithCredentials {
 
     return this.withCredentialsFromFiles(
-      path.join(directoryPath, clientUsernameFileName ?? 'trustly_client_username.txt'),
-      path.join(directoryPath, clientPasswordFileName ?? 'trustly_client_password.txt'),
+      path.join(directoryPath, clientUsernameFileName),
+      path.join(directoryPath, clientPasswordFileName),
     );
   }
 
@@ -481,25 +374,25 @@ export class TrustlyApiClientSettingsWithClientCertificates {
   }
 
   andTrustlyCertificateProduction(): TrustlyApiClientSettingsData {
-    return this.andTrustlyCertificateFromContent(cert_trustly_prod.default);
+    return this.andTrustlyCertificateFromContent(cert_trustly_prod);
   }
 
   andTrustlyCertificateTest(): TrustlyApiClientSettingsData {
-    return this.andTrustlyCertificateFromContent(cert_trustly_test.default);
+    return this.andTrustlyCertificateFromContent(cert_trustly_test);
   }
 
-  andTrustlyCertificateFromUserHome(trustlyPublicKeyFileName: string): TrustlyApiClientSettingsData {
+  andTrustlyCertificateFromUserHome(trustlyPublicKeyFileName = 'trustly_public.pem'): TrustlyApiClientSettingsData {
 
     return this.andTrustlyCertificateFromDirectory(
       TrustlyApiClientSettings.getUserHome(),
-      trustlyPublicKeyFileName ?? 'trustly_public.pem'
+      trustlyPublicKeyFileName
     );
   }
 
-  andTrustlyCertificateFromDirectory(directoryPath: string, trustlyPublicKeyFileName: string): TrustlyApiClientSettingsData {
+  andTrustlyCertificateFromDirectory(directoryPath: string, trustlyPublicKeyFileName = 'trustly_public.pem'): TrustlyApiClientSettingsData {
 
     return this.andTrustlyCertificateFromFile(
-      path.join(directoryPath, trustlyPublicKeyFileName ?? 'trustly_public.pem'),
+      path.join(directoryPath, trustlyPublicKeyFileName),
     );
   }
 
@@ -543,8 +436,8 @@ export class TrustlyApiClientSettingsWithClientCertificates {
 
     return {
       url: settings.url ?? '',
-      username: settings.username ?? null,
-      password: settings.password ?? null,
+      username: settings.username ?? '',
+      password: settings.password ?? '',
       clientPublicKey: settings.clientPublicKey,
       clientPrivateKey: settings.clientPrivateKey,
       trustlyPublicKey: settings.trustlyPublicKey,

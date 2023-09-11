@@ -1,40 +1,45 @@
+import {IRequestParamsData} from '../domain/base/IRequestParamsData';
 
+export type NotificationOkHandler = (method: string, uuid: string) => void;
+//   handle(method: string, uuid: string): void;
+// }
 
+export type NotificationFailHandler = (method: string, uuid: string, message: string) => void;
+//   handle: void;
+// }
 
-import { java, JavaObject } from "jree";
+export class NotificationArgs<D extends IRequestParamsData> {
 
+  readonly data: D;
 
+  readonly method: string;
+  readonly uuid: string;
 
+  readonly onOK?: NotificationOkHandler;
+  readonly onFailed?: NotificationFailHandler;
 
-export  class NotificationArgs<D extends IRequestParamsData> extends JavaObject {
+  constructor(data: D, method: string, uuid: string, onOK?: NotificationOkHandler, onFailed?: NotificationFailHandler) {
+    this.data = data;
+    this.method = method;
+    this.uuid = uuid;
+    if (onOK) {
+      this.onOK = onOK;
+    }
 
-  public static
-
-   interface NotificationOkHandler {
-
-     handle(method: string| null, uuid: string| null): void;
+    if (onFailed) {
+      this.onFailed = onFailed;
+    }
   }
 
-  public static
-
-   interface NotificationFailHandler {
-
-     handle(method: string| null, uuid: string| null, message: string| null): void;
+  public respondWithOk(): void {
+    if (this.onOK) {
+      this.onOK(this.method, this.uuid);
+    }
   }
 
-  private readonly data:  D | null;
-
-  private readonly method?: string;
-  private readonly uuid?: string;
-
-  private readonly onOK:  NotificationArgs.NotificationOkHandler | null;
-  private readonly onFailed:  NotificationArgs.NotificationFailHandler | null;
-
-  public respondWithOk():  void {
-    this.onOK.handle(this.method, this.uuid);
-  }
-
-  public respondWithFailed(message: string| null):  void {
-    this.onFailed.handle(this.method, this.uuid, message);
+  public respondWithFailed(message: string): void {
+    if (this.onFailed) {
+      this.onFailed(this.method, this.uuid, message);
+    }
   }
 }

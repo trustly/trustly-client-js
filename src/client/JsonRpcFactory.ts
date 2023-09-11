@@ -1,7 +1,7 @@
 import {JsonRpcRequest} from '../domain/base/JsonRpcRequest';
 import {IRequestParamsData} from '../domain/base/IRequestParamsData';
 import * as u from 'uuid';
-import {WithoutSignature} from '../domain/base/WithoutSignature';
+import {WithoutSignature} from '../domain/base/modifiers/WithoutSignature';
 
 export class JsonRpcFactory {
 
