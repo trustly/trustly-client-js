@@ -11,13 +11,13 @@ export interface AccountPayoutRequestDataAttributes extends AbstractRequestParam
    * If possible, try to keep this text as short as possible to maximise the chance that the full reference will fit into the reference
    * field on the customer's bank since some banks allow only a limited number of characters.
    */
-  shopperStatement?: string;
+  ShopperStatement: string;
 
   /**
    * The ExternalReference is a reference set by the merchant for any purpose and does not need to be unique for every API call. The
    * ExternalReference will be included in version 1.2 of the settlement report, ViewAutomaticSettlementDetailsCSV.
    */
-  externalReference?: string;
+  ExternalReference?: string;
 
   /**
    * Human-readable identifier of the consumer-facing merchant (e.g. legal name or trade name)
@@ -31,7 +31,7 @@ export interface AccountPayoutRequestDataAttributes extends AbstractRequestParam
    * pay for goods/services by placing funds on the payer's e-money account ("funding stage") following an immediate transfer into the
    * e-money account of the payee ( "payment" stage).
    */
-  pspMerchant?: string;
+  PSPMerchant?: string;
 
   /**
    * URL of the consumer-facing website where the order is initiated
@@ -45,7 +45,7 @@ export interface AccountPayoutRequestDataAttributes extends AbstractRequestParam
    * pay for goods/services by placing funds on the payer's e-money account ("funding stage") following an immediate transfer into the
    * e-money account of the payee ( "payment" stage).
    */
-  pspMerchantUrl?: string;
+  PSPMerchantURL?: string;
 
   /**
    * VISA category codes describing the merchant's nature of business.
@@ -59,7 +59,7 @@ export interface AccountPayoutRequestDataAttributes extends AbstractRequestParam
    * pay for goods/services by placing funds on the payer's e-money account ("funding stage") following an immediate transfer into the
    * e-money account of the payee ( "payment" stage).
    */
-  merchantCategoryCode?: string;
+  MerchantCategoryCode?: string;
 
   /**
    * Information about the Payer (ultimate debtor). This is required for some merchants and partners, see below.
@@ -68,5 +68,5 @@ export interface AccountPayoutRequestDataAttributes extends AbstractRequestParam
    * cards, as well as for Trustly Partners that are using Express Merchant Onboarding and aggregate traffic under a master processing
    * account (other cases may also apply).
    */
-  senderInformation: RecipientOrSenderInformation | null;
+  SenderInformation?: RecipientOrSenderInformation;
 }

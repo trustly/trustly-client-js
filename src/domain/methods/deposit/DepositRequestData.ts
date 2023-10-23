@@ -1,16 +1,16 @@
 import {DepositRequestDataAttributes} from './DepositRequestDataAttributes';
 import {AbstractToTrustlyRequestData} from '../../base/AbstractToTrustlyRequestData';
 
+type DepositAttributes = AbstractToTrustlyRequestData<DepositRequestDataAttributes>;
+type RequiredDepositAttributes =
+  DepositAttributes
+  & Required<Pick<AbstractToTrustlyRequestData<DepositRequestDataAttributes>, 'Attributes'>>;
 
-export interface DepositRequestData extends AbstractToTrustlyRequestData<DepositRequestDataAttributes> {
+export interface DepositRequestData extends RequiredDepositAttributes {
 
-  notificationUrl?: string;
+  NotificationURL: string;
 
-  endUserId?: string;
+  EndUserID: string;
 
-  messageId?: string;
-
-  // public getAttributes():  DepositRequestDataAttributes | null {
-  //   return super.getAttributes();
-  // }
+  MessageID: string;
 }

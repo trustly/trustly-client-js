@@ -9,5 +9,5 @@ export interface SettlementReportRequestDataAttributes extends AbstractRequestPa
    *
    * <pre>{@code 1.2}</pre>
    */
-  apiVersion?: "1.2" | string;
+  APIVersion: "1.2" | string;
 }

@@ -2,7 +2,7 @@ import {AbstractRequestParamsDataAttributes} from '../../base/AbstractRequestPar
 import {RecipientOrSenderInformation} from '../../common/RecipientOrSenderInformation';
 
 
-export  interface RegisterAccountPayoutRequestDataAttributes extends AbstractRequestParamsDataAttributes {
+export interface RegisterAccountPayoutRequestDataAttributes extends AbstractRequestParamsDataAttributes {
 
   /**
    * The text to show on the end-user's bank statement after Trustly's own 10 digit reference (which always will be displayed first). The
@@ -12,13 +12,13 @@ export  interface RegisterAccountPayoutRequestDataAttributes extends AbstractReq
    * If possible, try to keep this text as short as possible to maximise the chance that the full reference will fit into the reference
    * field on the customer's bank since some banks allow only a limited number of characters.
    */
-  shopperStatement?: string;
+  ShopperStatement: string;
 
   /**
    * *The ExternalReference is a reference set by the merchant for any purpose and does not need to be unique    *for every API call. The
    * ExternalReference will be included in version 1.2 of the settlement report, ViewAutomaticSettlementDetailsCSV.
    */
-  externalReference?: string;
+  ExternalReference?: string;
 
   /**
    * Human-readable identifier of the consumer-facing merchant (e.g. legal name or trade name)
@@ -28,7 +28,7 @@ export  interface RegisterAccountPayoutRequestDataAttributes extends AbstractReq
    * processing account. It is also mandatory for E-wallets used directly in a merchant's checkout.
    * </p>
    */
-  pspMerchant?: string;
+  PSPMerchant?: string;
 
   /**
    * URL of the consumer-facing website where the order is initiated
@@ -38,7 +38,7 @@ export  interface RegisterAccountPayoutRequestDataAttributes extends AbstractReq
    * processing account. It is also mandatory for E-wallets used directly in a merchant's checkout.
    * </p>
    */
-  pspMerchantUrl?: string;
+  PSPMerchantURL?: string;
 
   /**
    * VISA category codes describing the merchant's nature of business.
@@ -48,26 +48,26 @@ export  interface RegisterAccountPayoutRequestDataAttributes extends AbstractReq
    * processing account. It is also mandatory for E-wallets used directly in a merchant's checkout.
    * </p>
    */
-  merchantCategoryCode?: string;
+  MerchantCategoryCode?: string;
 
   /**
    * Information about the Payer (ultimate debtor). This is required for some merchants and partners, see below.
    */
-  senderInformation?: RecipientOrSenderInformation;
+  SenderInformation?: RecipientOrSenderInformation;
 
   /**
    * The end-user's date of birth.
    *
    * <pre>{@code 1979-01-31}</pre>
    */
-  dateOfBirth?: string;
+  DateOfBirth?: string;
 
   /**
    * The mobile phonenumber to the account holder in international format. This is used for KYC and AML routines.
    *
    * <pre>{@code +46709876543}</pre>
    */
-  mobilePhone?: string;
+  MobilePhone?: string;
 
   /**
    * The account holder's social security number / personal number / birth number / etc. Useful for some banks for identifying transactions
@@ -75,42 +75,42 @@ export  interface RegisterAccountPayoutRequestDataAttributes extends AbstractReq
    *
    * <pre>{@code 790131-1234}</pre>
    */
-  nationalIdentificationNumber?: string;
+  NationalIdentificationNumber?: string;
 
   /**
    * The ISO 3166-1-alpha-2 code of the account holder's country.
    *
    * <pre>{@code SE}</pre>
    */
-  addressCountry?: string;
+  AddressCountry?: string;
 
   /**
    * Postal code of the account holder.
    *
    * <pre>{@code SE-11253}</pre>
    */
-  addressPostalCode?: string;
+  AddressPostalCode?: string;
 
   /**
    * City of the account holder.
    *
    * <pre>{@code Stockholm}</pre>
    */
-  addressCity?: string;
+  AddressCity?: string;
 
   /**
    * Street address of the account holder.
    *
    * <pre>{@code Main street 1}</pre>
    */
-  addressLine1?: string;
+  AddressLine1?: string;
 
   /**
    * Additional address information of the account holder.
    *
    * <pre>{@code Apartment 123, 2 stairs up}</pre>
    */
-  addressLine2?: string;
+  AddressLine2?: string;
 
   /**
    * The entire address of the account holder. This attribute should only be used if you are unable to provide the address information in
@@ -118,12 +118,12 @@ export  interface RegisterAccountPayoutRequestDataAttributes extends AbstractReq
    *
    * <pre>{@code Birgerstreet 14, SE-11411 Stockholm, Sweden}</pre>
    */
-  address?: string;
+  Address?: string;
 
   /**
    * The email address of the account holder.
    *
    * <pre>{@code test@trustly.com}</pre>
    */
-  email?: string;
+  Email?: string;
 }

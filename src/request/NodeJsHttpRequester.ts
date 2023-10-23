@@ -1,6 +1,7 @@
 import {HttpRequester} from './HttpRequester';
 import {TrustlyApiClientSettingsData} from '../client/TrustlyApiClientSettings';
 import * as http from 'http';
+import * as https from 'https';
 
 export class NodeJsHttpRequester implements HttpRequester {
 
@@ -8,8 +9,9 @@ export class NodeJsHttpRequester implements HttpRequester {
 
     return new Promise((resolve, reject) => {
 
-      const http_request = http.request(
-        settings.url,
+      const client = settings.url.startsWith('https:') ? https : http;
+      const https_request = client.request(
+        new URL(settings.url),
         {
           method: 'POST',
           headers: {
@@ -19,12 +21,21 @@ export class NodeJsHttpRequester implements HttpRequester {
         },
         response => {
 
-          response.on('data', data => {
-            if (typeof data == 'string') {
-              resolve(data);
+          let data = '';
+          response.on('data', chunk => {
+            if (typeof chunk == 'string') {
+              data += chunk;
+            } else if (chunk instanceof Buffer) {
+              data += chunk.toString();
+            } else if (chunk instanceof Uint8Array) {
+              data += chunk.toString();
             } else {
-              reject(new Error(`Do not know how to handle the responded with type '${typeof data}'`));
+              reject(new Error(`Do not know how to handle the responded with type '${typeof chunk}'`));
             }
+          });
+
+          response.on('end', () => {
+            resolve(data);
           });
 
           response.on('error', error => {
@@ -33,12 +44,12 @@ export class NodeJsHttpRequester implements HttpRequester {
         }
       );
 
-      http_request.on('error', error => {
+      https_request.on('error', error => {
         reject(new Error(`${error.name}: ${error.message}`, {cause: error}));
       });
 
-      http_request.write(request);
-      http_request.end();
+      https_request.write(request);
+      https_request.end();
     });
   }
 }

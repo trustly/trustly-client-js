@@ -7,7 +7,7 @@ export interface CancelChargeRequestData extends AbstractToTrustlyRequestData<Em
   /**
    * The OrderID of the Charge request that should be canceled.
    */
-  orderId?: string;
+  OrderID: string;
 }
 
 

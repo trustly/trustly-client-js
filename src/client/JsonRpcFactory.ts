@@ -15,8 +15,8 @@ export class JsonRpcFactory {
       method: method,
       version: '1.1',
       params: {
-        uuid: uuid,
-        data: requestData,
+        UUID: uuid,
+        Data: requestData,
       },
     };
   }

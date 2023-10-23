@@ -9,5 +9,5 @@ export interface NotificationResponse extends AbstractResponseResultData {
    *   <li>OK - The notification has been received</li>
    * </ul>
    */
-  status?: 'OK' | string | undefined;
+  status?: string | undefined;
 }

@@ -1,7 +1,7 @@
 import {IFromTrustlyRequestData} from './IFromTrustlyRequestData';
-import {IRequestParams} from './IRequestParams';
+import {ResponseSignatureOwner} from "./SignatureOwner";
 
-export class NotificationRequestParams<D extends IFromTrustlyRequestData> implements IRequestParams<D> {
+export class NotificationRequestParams<D extends IFromTrustlyRequestData> implements ResponseSignatureOwner {
 
   public signature: string;
   public uuid: string;
@@ -11,12 +11,5 @@ export class NotificationRequestParams<D extends IFromTrustlyRequestData> implem
     this.signature = signature;
     this.uuid = uuid;
     this.data = data;
-  }
-
-  withSignature(value: string): this {
-    return {
-      ...this,
-      signature: value,
-    };
   }
 }

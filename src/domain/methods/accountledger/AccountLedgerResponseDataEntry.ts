@@ -3,7 +3,7 @@ export interface AccountLedgerResponseDataEntry {
   /**
    * Your userid in our system.
    */
-  userId?: string;
+  userid?: string;
 
   /**
    * The datestamp for when this ledger row affected your balance in our system.
@@ -13,22 +13,22 @@ export interface AccountLedgerResponseDataEntry {
   /**
    * The globally unique OrderID that resulted in this ledger record.
    */
-  orderId?: string;
+  orderid?: string;
 
   /**
    * The name of the bookkeeping account this ledger record belongs to.
    */
-  accountName?: string;
+  accountname?: string;
 
   /**
    * Your unique MessageID that you used to create the order that resulted in this ledger record.
    */
-  messageId?: string;
+  messageid?: string;
 
   /**
    * A human friendly description of this ledger record.
    */
-  transactionType?: string;
+  transactiontype?: string;
 
   /**
    * The currency of the amount in this ledger record.
@@ -43,5 +43,5 @@ export interface AccountLedgerResponseDataEntry {
   /**
    * An ID meaning different things for different payment methods, you probably don't need this data.
    */
-  gluepayId?: string;
+  gluepayid?: string;
 }

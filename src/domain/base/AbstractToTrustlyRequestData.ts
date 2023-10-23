@@ -3,5 +3,5 @@ import {IToTrustlyRequestParams} from './IToTrustlyRequestParams';
 
 export interface AbstractToTrustlyRequestData<A extends AbstractRequestParamsDataAttributes> extends IToTrustlyRequestParams {
 
-  attributes?: A;
+  Attributes?: A;
 }

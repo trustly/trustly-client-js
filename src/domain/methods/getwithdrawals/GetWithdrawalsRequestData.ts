@@ -3,6 +3,6 @@ import {AbstractToTrustlyRequestData} from '../../base/AbstractToTrustlyRequestD
 
 export interface GetWithdrawalsRequestData extends AbstractToTrustlyRequestData<EmptyRequestDataAttributes> {
 
-  orderId?: string;
+  OrderID: string;
 }
 

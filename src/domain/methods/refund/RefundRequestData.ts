@@ -6,16 +6,16 @@ export interface RefundRequestData extends AbstractToTrustlyRequestData<RefundRe
   /**
    * The OrderID of the initial deposit.
    */
-  orderId?: string;
+  OrderID: string;
 
   /**
    * The amount to refund the customer with exactly two decimals. Only digits. Use dot (.) as decimal separator.
    */
-  amount?: string;
+  Amount: string;
 
   /**
    * The currency of the amount to refund the customer.
    */
-  currency?: string;
+  Currency: string;
 }
 

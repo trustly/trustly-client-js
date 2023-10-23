@@ -3,7 +3,7 @@ import {ResponseError} from '../base/ResponseError';
 
 export class TrustlyErrorResponseException extends AbstractTrustlyApiException {
 
-  private readonly responseError?: ResponseError;
+  readonly responseError?: ResponseError;
 
   public constructor(message: string, cause: Error | undefined, responseError?: ResponseError) {
     super(`${message} - ${responseError?.message ?? responseError?.name ?? ''}`, cause);
@@ -12,7 +12,7 @@ export class TrustlyErrorResponseException extends AbstractTrustlyApiException {
     }
   }
 
-  public getResponseError(): ResponseError | undefined {
-    return this.responseError;
-  }
+  // public getResponseError(): ResponseError | undefined {
+  //   return this.responseError;
+  // }
 }

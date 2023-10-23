@@ -7,14 +7,14 @@ export interface SettlementReportRequestData extends AbstractToTrustlyRequestDat
    * If the value is specified (i.e. not "null"), the system will only search for a settlement executed in that particular currency. If
    * unspecified, settlements executed in any currency are included in the report.
    */
-  currency?: string;
+  Currency?: string;
 
   /**
    * The date when the settlement was processed.
    *
    * <pre>{@code 2014-04-01}</pre>
    */
-  settlementDate?: string;
+  SettlementDate?: string;
 }
 
 

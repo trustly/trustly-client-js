@@ -11,10 +11,9 @@ import {IRequestParams} from '../domain/base/IRequestParams';
 import {TrustlyStringUtils} from '../util/TrustlyStringUtils';
 import {WithoutSignature} from '../domain/base/modifiers/WithoutSignature';
 import * as crypto from 'crypto';
+import {NotificationRequest} from "../domain/base/NotificationRequest";
 
 export class DefaultJsonRpcSigner implements JsonRpcSigner {
-
-  public static readonly SHA1_WITH_RSA: string = 'SHA1withRSA';
 
   private readonly serializer: Serializer;
   private readonly settings: TrustlyApiClientSettingsData;
@@ -24,24 +23,24 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
     this.settings = settings;
   }
 
-  public createPlaintext(serializedData: string, method: string, uuid: string): crypto.BinaryLike {
+  public createPlaintext(serializedData: string, method: string, uuid: string): string {
     return `${method}${uuid}${serializedData}`;
   }
 
   public signRequest<D extends IRequestParamsData, T extends JsonRpcRequest<D>>(v: WithoutSignature<T>): JsonRpcRequest<D> {
 
-    const signature = this.createSignature(v.method, v.params.uuid, v.params.data);
+    const signature = this.createSignature(v.method, v.params.UUID, v.params.Data);
 
     return {
       ...v,
       params: {
         ...v.params,
-        signature: signature,
+        Signature: signature,
       },
     };
   }
 
-  public signResponse<D extends IResponseResultData, T extends JsonRpcResponse<D>>(response: WithoutSignature<T>): JsonRpcResponse<D> {
+  public signResponse<D extends IResponseResultData, T extends JsonRpcResponse<D> = JsonRpcResponse<D>>(response: WithoutSignature<T>): JsonRpcResponse<D> {
 
     if (response.result) {
       const signature = this.createSignature(response.result.method, response.result.uuid, response.result.data);
@@ -74,12 +73,21 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
     const serializedData = this.serializer.serializeData(data);
     const plainText = this.createPlaintext(serializedData, method, uuid);
 
-    const sign = crypto.createSign('SHA1withRSA'); // RSA-SHA256
+    const sign = crypto.createSign('RSA-SHA1'); // RSA-SHA256
     sign.update(plainText);  // data from your file would go here
     return sign.sign(this.settings.clientPrivateKey, 'base64');
   }
 
   public verifyRequest<D extends IRequestParamsData, P extends IRequestParams<D>>(request: IRequest<P>): void {
+
+    const uuid = request.params.UUID;
+    const signature = request.params.Signature;
+    const data = request.params.Data;
+
+    this.verify(request.method, uuid, signature, data);
+  }
+
+  public verifyNotificationRequest<D extends IRequestParamsData>(request: NotificationRequest<D>): void {
 
     const uuid = request.params.uuid;
     const signature = request.params.signature;
@@ -117,10 +125,10 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
 
     const responsePlainText = this.createPlaintext(serializedResponseData, method, uuid);
 
-    const verify = crypto.createVerify('SHA1withRSA'); // RSA-SHA256
-    verify.update(responsePlainText);  // data from your file would go here
+    const verify = crypto.createVerify('RSA-SHA1'); // RSA-SHA256
+    verify.update(responsePlainText, 'utf-8');
 
-    if (!verify.verify(this.settings.trustlyPublicKey, expectedSignature)) {
+    if (!verify.verify(this.settings.trustlyPublicKey, expectedSignature, 'base64')) {
       throw new Error(`Could not verify the response`);
     }
   }

@@ -7,5 +7,5 @@ export interface RefundRequestDataAttributes extends AbstractRequestParamsDataAt
    * <p>
    * This will be included in version {@code 1.2} of the settlement report, {@code ViewAutomaticSettlementDetailsCSV}.
    */
-  externalReference?: string;
+  ExternalReference?: string;
 }

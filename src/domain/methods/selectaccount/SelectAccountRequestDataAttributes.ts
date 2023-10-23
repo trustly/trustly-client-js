@@ -1,4 +1,5 @@
 import {AbstractAccountDataAttributes} from '../../common/AbstractAccountDataAttributes';
+import {NumberBoolean} from "../../base/NumberBoolean";
 
 export interface SelectAccountRequestDataAttributes extends AbstractAccountDataAttributes {
 
@@ -8,14 +9,14 @@ export interface SelectAccountRequestDataAttributes extends AbstractAccountDataA
    * <p>
    * If this is set to 1, then {@link SelectAccountRequestDataAttributes#getEmail()} is required.
    */
-  requestDirectDebitMandate: 1 | 0;
+  RequestDirectDebitMandate?: NumberBoolean;
 
   /**
    * The end-user's date of birth.
    *
    * <pre>{@code 1979-01-31}</pre>
    */
-  dateOfBirth?: string;
+  DateOfBirth?: string;
 
   /**
    * Human-readable identifier of the consumer-facing merchant(e.g.legal name or trade name)
@@ -27,7 +28,7 @@ export interface SelectAccountRequestDataAttributes extends AbstractAccountDataA
    *
    * <pre>{@code Merchant Ltd.}</pre>
    */
-  pspMerchant?: string;
+  PSPMerchant?: string;
 
   /**
    * URL of the consumer-facing website where the order is initiated
@@ -39,7 +40,7 @@ export interface SelectAccountRequestDataAttributes extends AbstractAccountDataA
    *
    * <pre>{@code www.merchant.com}</pre>
    */
-  pspMerchantUrl?: string;
+  PSPMerchantURL?: string;
 
   /**
    * VISA category codes describing the merchant's nature of business.
@@ -49,5 +50,5 @@ export interface SelectAccountRequestDataAttributes extends AbstractAccountDataA
    * processing account.
    * </p>
    */
-  merchantCategoryCode?: string;
+  MerchantCategoryCode?: string;
 }

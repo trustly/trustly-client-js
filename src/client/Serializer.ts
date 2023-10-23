@@ -2,7 +2,7 @@ import {IData} from '../domain/base/IData';
 
 export class Serializer {
 
-  public serializeData<D extends IData>(data: D): string {
+  public serializeData<D extends IData>(data: D | undefined): string {
     return this.serializeNode(data);
   }
 

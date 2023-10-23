@@ -1,4 +1,5 @@
 import {AbstractResponseResultData} from '../../base/AbstractResponseResultData';
+import {StringBoolean} from "../../base/StringBoolean";
 
 export interface RefundResponseData extends AbstractResponseResultData {
 
@@ -12,5 +13,5 @@ export interface RefundResponseData extends AbstractResponseResultData {
    * <p>
    * If the refund request is not accepted, you will get an error code back in {@link JsonRpcResponse#getError()}.
    */
-  result: boolean;
+  result: StringBoolean;
 }

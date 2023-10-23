@@ -18,7 +18,7 @@ export interface TrustlyApiClientSettingsData {
 
   clientPublicKey: crypto.KeyObject;
 
-  clientPrivateKey: crypto.KeyObject; // | crypto.SignKeyObjectInput | crypto.SignPrivateKeyInput;
+  clientPrivateKey: crypto.KeyObject;
 
   trustlyPublicKey: crypto.KeyObject;
 
@@ -31,21 +31,6 @@ export class TrustlyApiClientSettings {
 
   static readonly URL_TEST = 'https://test.trustly.com/api/1';
   static readonly URL_PRODUCTION = 'https://api.trustly.com/1';
-
-  // private readonly settings: T;
-
-  // constructor(settings: T) {
-  //   this.settings = settings;
-  //
-  //   // TODO: Move this into the build method, where we fallback if nothing else if set.
-  //   // if (this._settings.includeMessageInNotificationResponse === undefined) {
-  //   //   this._settings.includeMessageInNotificationResponse = true;
-  //   // }
-  //   //
-  //   // if (this._settings.includeExceptionMessageInNotificationResponse === undefined) {
-  //   //   this._settings.includeExceptionMessageInNotificationResponse = false;
-  //   // }
-  // }
 
   /**
    * Creates settings instance for production, by default looking among environment variables or falling back on files in user home.
@@ -153,7 +138,9 @@ export class TrustlyApiClientSettings {
   static streamToJavaPublicKey(content: crypto.KeyLike | crypto.PublicKeyInput | undefined, filename?: string): crypto.KeyObject {
 
     if (!content && filename) {
-      content = fs.readFileSync(filename);
+
+      const absolutePath = path.resolve(filename);
+      content = fs.readFileSync(absolutePath);
     }
 
     if (!content) {

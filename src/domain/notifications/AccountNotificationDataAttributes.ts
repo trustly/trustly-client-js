@@ -20,12 +20,12 @@ export interface AccountNotificationDataAttributes extends AbstractRequestParams
   /**
    * The last digits of the bank account number.This can be used for matching against received KYC data from your manual routines.
    */
-  lastDigits?: string;
+  lastdigits?: string;
 
   /**
    * An ID that uniquely identifies the account holder.Note: The format of this field will for some countries look different than the example.
    */
-  personId?: string;
+  personid?: string;
 
   /**
    * The name of the account holder
@@ -50,5 +50,5 @@ export interface AccountNotificationDataAttributes extends AbstractRequestParams
   /**
    * 1 if a direct debit mandate exists for this account, 0 otherwise
    */
-  directDebitMandate?: 1 | 0;
+  directdebitmandate?: 1 | 0;
 }

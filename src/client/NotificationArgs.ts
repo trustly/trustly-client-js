@@ -1,12 +1,8 @@
 import {IRequestParamsData} from '../domain/base/IRequestParamsData';
 
-export type NotificationOkHandler = (method: string, uuid: string) => void;
-//   handle(method: string, uuid: string): void;
-// }
+export type NotificationOkHandler = (method: string, uuid: string) => Promise<void>;
 
-export type NotificationFailHandler = (method: string, uuid: string, message: string) => void;
-//   handle: void;
-// }
+export type NotificationFailHandler = (method: string, uuid: string, message: string) => Promise<void>;
 
 export class NotificationArgs<D extends IRequestParamsData> {
 
@@ -31,15 +27,19 @@ export class NotificationArgs<D extends IRequestParamsData> {
     }
   }
 
-  public respondWithOk(): void {
+  public respondWithOk(): Promise<void> {
     if (this.onOK) {
-      this.onOK(this.method, this.uuid);
+      return this.onOK(this.method, this.uuid);
+    } else {
+      return Promise.resolve();
     }
   }
 
-  public respondWithFailed(message: string): void {
+  public respondWithFailed(message: string): Promise<void> {
     if (this.onFailed) {
-      this.onFailed(this.method, this.uuid, message);
+      return this.onFailed(this.method, this.uuid, message);
+    } else {
+      return Promise.resolve();
     }
   }
 }

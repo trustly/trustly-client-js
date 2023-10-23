@@ -1,5 +1,6 @@
 import {IWithRejectionResult} from '../../base/IWithRejectionResult';
 import {AbstractResponseResultData} from '../../base/AbstractResponseResultData';
+import {StringBoolean} from "../../base/StringBoolean";
 
 export interface ChargeResponseData extends AbstractResponseResultData, IWithRejectionResult {
 
@@ -14,7 +15,7 @@ export interface ChargeResponseData extends AbstractResponseResultData, IWithRej
    * 1 if the charge was accepted for processing, 0 otherwise. Note that this is an acceptance of the order, no money has been charged from
    * the account until you receive notifications thereof.
    */
-  result: boolean;
+  result: StringBoolean;
 
   /**
    * If the charge was NOT accepted, a textual code describing the rejection reason, null otherwise.

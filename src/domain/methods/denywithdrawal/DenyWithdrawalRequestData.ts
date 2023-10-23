@@ -3,6 +3,6 @@ import {EmptyRequestDataAttributes} from '../../base/EmptyRequestDataAttributes'
 
 export interface DenyWithdrawalRequestData extends AbstractToTrustlyRequestData<EmptyRequestDataAttributes> {
 
-  orderId: number;
+  OrderID: number;
 }
 

@@ -1,4 +1,5 @@
 import {AbstractResponseResultData} from '../../base/AbstractResponseResultData';
+import {StringBoolean} from "../../base/StringBoolean";
 
 export interface DenyWithdrawalResponseData extends AbstractResponseResultData {
 
@@ -11,5 +12,5 @@ export interface DenyWithdrawalResponseData extends AbstractResponseResultData {
    * "1" if the refund request is accepted by Trustly's system. If the refund request is not accepted, you will get an error code back in
    * the {@link JsonRpcResponse#getError()}
    */
-  result: boolean;
+  result: StringBoolean;
 }

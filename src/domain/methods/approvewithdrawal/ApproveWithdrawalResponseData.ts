@@ -1,4 +1,5 @@
 import {AbstractResponseResultData} from '../../base/AbstractResponseResultData';
+import {StringBoolean} from "../../base/StringBoolean";
 
 export interface ApproveWithdrawalResponseData extends AbstractResponseResultData {
 
@@ -10,5 +11,5 @@ export interface ApproveWithdrawalResponseData extends AbstractResponseResultDat
   /**
    * 1 if the withdrawal could be approved and 0 otherwise.
    */
-  result: boolean;
+  result: StringBoolean;
 }

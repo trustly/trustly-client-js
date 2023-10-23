@@ -24,18 +24,18 @@ export interface ChargeRequestDataAttributes extends AbstractRequestParamsDataAt
    *   <dd><pre>{@code "Sport Shop"}</pre></dd>
    * </dl>
    */
-  shopperStatement?: string;
+  ShopperStatement: string;
 
   /**
    * The email address of the end user.
    */
-  email?: string;
+  Email: string;
 
   /**
    * The date when the funds will be charged from the end user's bank account. If this attribute is not sent, the charge will be attempted
    * as soon as possible.
    */
-  paymentDate?: string;
+  PaymentDate?: string;
 
   /**
    * The ExternalReference is a reference set by the merchant for any purpose and does not need to be unique for every API call. For
@@ -45,7 +45,7 @@ export interface ChargeRequestDataAttributes extends AbstractRequestParamsDataAt
    *
    * <pre>{@code 32423534523}</pre>
    */
-  externalReference?: string;
+  ExternalReference?: string;
 
   /**
    * Human-readable identifier of the consumer-facing merchant (e.g. legal name or trade name)
@@ -55,7 +55,7 @@ export interface ChargeRequestDataAttributes extends AbstractRequestParamsDataAt
    * processing account.
    * </p>
    */
-  pspMerchant?: string;
+  PSPMerchant?: string;
 
   /**
    * URL of the consumer-facing website where the order is initiated
@@ -65,7 +65,7 @@ export interface ChargeRequestDataAttributes extends AbstractRequestParamsDataAt
    * processing account.
    * </p>
    */
-  pspMerchantUrl?: string;
+  PSPMerchantURL?: string;
 
   /**
    * VISA category codes describing the merchant's nature of business.
@@ -75,5 +75,5 @@ export interface ChargeRequestDataAttributes extends AbstractRequestParamsDataAt
    * processing account.
    * </p>
    */
-  merchantCategoryCode?: string;
+  MerchantCategoryCode?: string;
 }

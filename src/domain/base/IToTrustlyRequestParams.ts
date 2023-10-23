@@ -5,12 +5,12 @@ export interface ICredentialParams {
   /**
    * You do not have to set this property. It is set automatically by the API Client.
    */
-  username: string;
+  Username: string;
 
   /**
    * You do not have to set this property. It is set automatically by the API Client.
    */
-  password: string;
+  Password: string;
 }
 
 export interface IToTrustlyRequestParams extends IRequestParamsData, ICredentialParams {

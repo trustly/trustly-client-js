@@ -1,7 +1,7 @@
-import {RegisterAccountPayoutRequestDataAttributes} from './RegisterAccountPayoutRequestDataAttributes';
-import {AbstractToTrustlyRequestData} from '../../base/AbstractToTrustlyRequestData';
+import {AbstractToTrustlyRequestData} from "../../base/AbstractToTrustlyRequestData";
+import {EmptyRequestDataAttributes} from "../../base/EmptyRequestDataAttributes";
 
-export interface RegisterAccountPayoutRequestData extends AbstractToTrustlyRequestData<RegisterAccountPayoutRequestDataAttributes> {
+export interface MerchantSettlementRequestData extends AbstractToTrustlyRequestData<EmptyRequestDataAttributes> {
 
   /**
    * ID, username, hash or anything uniquely identifying the end-user to be identified. Preferably the same ID/username as used in the
@@ -22,23 +22,23 @@ export interface RegisterAccountPayoutRequestData extends AbstractToTrustlyReque
    * The bank number identifying the end-user's bank in the given clearing house. For bank accounts in IBAN format you should just provide
    * an empty string (""). For non-IBAN format, see table <a href="https://developers.trustly.com/emea/docs/registeraccount">here</a>
    */
-  BankNumber?: string;
+  BankNumber: string;
 
   /**
    * The account number, identifying the end-user's account in the bank. Can be either IBAN or country-specific format, see table
    * <a href="https://developers.trustly.com/emea/docs/registeraccount">here</a>
    */
-  AccountNumber?: string;
+  AccountNumber: string;
 
   /**
    * First name of the account holder (or the name of the company/organization)
    */
-  Firstname?: string;
+  Firstname: string;
 
   /**
    * Last name of the account holder (empty for organizations/companies)
    */
-  Lastname?: string;
+  Lastname: string;
 
   /**
    * The URL to which notifications for this payment should be sent to. This URL should be hard to guess and not contain a ? ("question

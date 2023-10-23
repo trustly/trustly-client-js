@@ -3,8 +3,6 @@ import {TrustlyApiClient} from './TrustlyApiClient';
 import {NotificationResponse} from '../domain/base/NotificationResponse';
 import {JsonRpcResponse} from '../domain/base/JsonRpcResponse';
 import {TrustlyStringUtils} from '../util/TrustlyStringUtils';
-import * as pack from '../../package.json';
-import * as http from 'http';
 
 export interface NotificationResponder {
 
@@ -12,35 +10,35 @@ export interface NotificationResponder {
 
   setStatus(httpStatus: number): void;
 
-  writeBody(value: string): void;
+  writeBody(value: string): Promise<void>;
 }
 
-export class DefaultNotificationResponder implements NotificationResponder {
-
-  private readonly response: http.IncomingMessage;
-
-  public constructor(response: http.IncomingMessage) {
-    this.response = response;
-  }
-
-  public addHeader(key: string, value: string): void {
-    this.response.headers[key] = value;
-  }
-
-  public setStatus(httpStatus: number): void {
-    this.response.statusCode = httpStatus;
-  }
-
-  public writeBody(_value: string): void {
-    throw new Error(`Not implemented writing body`);
-  }
-}
+// export class DefaultNotificationResponder implements NotificationResponder {
+//
+//   private readonly response: http.IncomingMessage;
+//
+//   public constructor(response: http.IncomingMessage) {
+//     this.response = response;
+//   }
+//
+//   public addHeader(key: string, value: string): void {
+//     this.response.headers[key] = value;
+//   }
+//
+//   public setStatus(httpStatus: number): void {
+//     this.response.statusCode = httpStatus;
+//   }
+//
+//   public writeBody(_value: string): Promise<void> {
+//     throw new Error(`Not implemented writing body`);
+//   }
+// }
 
 export class TrustlyApiClientExtensions {
 
-  public static handleNotificationToHttp(request: string | ArrayBuffer, response: http.IncomingMessage): void {
-    TrustlyApiClientExtensions.handleNotificationRequest(request, new DefaultNotificationResponder(response));
-  }
+  // public static handleNotificationToHttp(request: string | ArrayBuffer, response: http.IncomingMessage): Promise<void> {
+  //   return TrustlyApiClientExtensions.handleNotificationRequest(request, new DefaultNotificationResponder(response));
+  // }
 
   /**
    * Will deserialize, verify and validate the incoming payload for you.
@@ -52,8 +50,8 @@ export class TrustlyApiClientExtensions {
    * {@link NotificationArgs#respondWithFailed} methods, which will callback to your here given {@code onOK} or {@code onFailed} arguments.
    * <p>
    *
+   * @param client The client which holds the notifications listeners
    * @param request The incoming request that contains a notification
-   * @param response The outgoing response that we should send our notification response to
    * @param responder The responder that will be used to actually send something back as a response
    *
    * @throws IOException If the JSON string could not be deserialized or the response could not be sent.
@@ -61,50 +59,34 @@ export class TrustlyApiClientExtensions {
    * @throws TrustlyValidationException If the response data could not be properly validated.
    * @throws TrustlySignatureException If the signature of the response could not be properly verified.
    */
-  public static handleNotificationRequest(request: string | ArrayBuffer, responder: NotificationResponder): void {
-
-    // TrustlyApiClientExtensions.handleNotificationRequest(request.getInputStream(), new DefaultNotificationResponder(response));
-    // TrustlyApiClientExtensions.handleNotificationRequest(incoming, new DefaultNotificationResponder(response));
-
-    // const [incoming, responder] = args as [java.io.InputStream, TrustlyApiClientExtensions.NotificationResponder];
+  public static async handleNotificationRequest(client: TrustlyApiClient, request: string | ArrayBuffer, responder: NotificationResponder): Promise<void> {
 
     let requestStringBody: string;
     if (typeof request == 'string') {
       requestStringBody = request;
     } else {
-      throw new Error(`Do not know how to handle this yet`);
+      throw new Error(`Do not know how to handle a request of type ${typeof request}`);
     }
 
     let responseCount = 0;
-    let clientCount = 0;
-    for (const client of TrustlyApiClient.getRegisteredClients()) {
-      clientCount++;
-      client.handleNotification(
-        requestStringBody,
-        (method, uuid) => {
-          responseCount++;
-          TrustlyApiClientExtensions.respond(client, responder, method, uuid, 'OK', undefined, 200);
-        },
-        (method, uuid, message) => {
-          responseCount++;
-          TrustlyApiClientExtensions.respond(client, responder, method, uuid, 'FAILED', message, 500);
-        },
-      );
-    }
 
-    if (clientCount === 0) {
-      throw new TrustlyNoNotificationClientException('There are no registered Api Clients listening to notifications');
-    }
+    await client.handleNotification(
+      requestStringBody,
+      (method, uuid) => {
+        responseCount++;
+        return TrustlyApiClientExtensions.respond(client, responder, method, uuid, 'OK', undefined, 200);
+      },
+      (method, uuid, message) => {
+        responseCount++;
+        return TrustlyApiClientExtensions.respond(client, responder, method, uuid, 'FAILED', message, 500);
+      },
+    );
 
     if (responseCount === 0) {
       throw new TrustlyNoNotificationClientException(
         'None of your client\'s event listeners responded with OK or FAILED. That must be done.');
     }
   }
-
-  // public static handleNotificationRequest(incoming: java.io.InputStream| null, response: HttpServletResponse| null):  void;
-
-  // public static handleNotificationRequest(incoming: java.io.InputStream| null, responder: TrustlyApiClientExtensions.NotificationResponder| null):  void;
 
   public static respond(
     client: TrustlyApiClient,
@@ -114,7 +96,7 @@ export class TrustlyApiClientExtensions {
     status: 'OK' | 'FAILED',
     message: string | undefined,
     httpStatusCode: number,
-  ): void {
+  ): Promise<void> {
 
     const notificationResponse: NotificationResponse = {
       status: status,
@@ -143,31 +125,18 @@ export class TrustlyApiClientExtensions {
           },
         };
       }
-
-      // rpcResponse = rpcResponse.toBuilder()
-      //   .result(
-      //     rpcResponse.getResult().toBuilder()
-      //       .data(
-      //         rpcResponse.getResult().getData().toBuilder()
-      //           .any("message", message)
-      //           .build()
-      //       )
-      //       .build()
-      //   )
-      //   .build();
     }
 
-    // TODO: Needs special conversion for some fields, such as string number booleans?
-    const rpcString = JSON.stringify(rpcResponse); // TrustlyApiClientExtensions.OBJECT_MAPPER.writeValueAsString(rpcResponse);
+    const rpcString = JSON.stringify(rpcResponse);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const assemblyVersion: string = process.env.npm_package_version ?? pack?.version ?? 'N/A'; // TrustlyApiClientExtensions.class.getPackage().getImplementationVersion();
+    const assemblyVersion: string = process?.env?.npm_package_version ?? 'N/A';
 
     responder.addHeader('Content-Type', 'application/json');
     responder.addHeader('Accept', 'application/json');
     responder.addHeader('User-Agent', 'trustly-api-client-js/' + assemblyVersion);
     responder.setStatus(httpStatusCode);
-    responder.writeBody(rpcString);
+    return responder.writeBody(rpcString);
   }
 }
 

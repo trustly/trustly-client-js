@@ -7,14 +7,14 @@ export interface RegisterAccountResponseData extends AbstractResponseResultData 
    *
    * <pre>{@code 7653385737}</pre>
    */
-  accountId?: string;
+  accountid?: string;
 
   /**
    * The clearinghouse for this account.
    *
    * <pre>{@code SWEDEN}</pre>
    */
-  clearingHouse?: string;
+  clearinghouse?: string;
 
   /**
    * The name of the bank for this account.

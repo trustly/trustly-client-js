@@ -13,37 +13,37 @@ export interface WithdrawRequestDataAttributes extends AbstractAmountConstrained
    * <p>
    * Use dot(.) as decimal separator.
    */
-  suggestedAmount?: string;
+  SuggestedAmount?: string;
 
   /**
    * The end-user's first name.
    */
-  dateOfBirth?: string;
+  DateOfBirth?: string;
 
   /**
    * The ISO 3166-1-alpha-2 code of the shipping address country.
    */
-  addressCountry?: string;
+  AddressCountry?: string;
 
   /**
    * The postalcode of the shipping address.
    */
-  addressPostalCode?: string;
+  AddressPostalCode?: string;
 
   /**
    * The city of the shipping address.
    */
-  addressCity?: string;
+  AddressCity?: string;
 
   /**
    * Shipping address street
    */
-  addressLine1?: string;
+  AddressLine1?: string;
 
   /**
    * Additional shipping address information.
    */
-  addressLine2?: string;
+  AddressLine2?: string;
 
   /**
    * The entire shipping address.
@@ -57,13 +57,13 @@ export interface WithdrawRequestDataAttributes extends AbstractAmountConstrained
    *   <li>{@link WithdrawRequestDataAttributes#getAddressLine2()}</li>
    * </ul>
    */
-  address?: string;
+  Address?: string;
 
   /**
    * The ExternalReference is a reference set by the merchant for any purpose and does not need to be unique for every API call. The
    * ExternalReference will be included in version 1.2 of the settlement report, ViewAutomaticSettlementDetailsCSV.
    */
-  externalReference?: string;
+  ExternalReference?: string;
 
   /**
    * Human-readable identifier of the consumer-facing merchant (e.g. legal name or trade name)
@@ -73,7 +73,7 @@ export interface WithdrawRequestDataAttributes extends AbstractAmountConstrained
    * processing account.
    * </p>
    */
-  pspMerchant?: string;
+  PSPMerchant?: string;
 
   /**
    * URL of the consumer-facing website where the order is initiated
@@ -83,7 +83,7 @@ export interface WithdrawRequestDataAttributes extends AbstractAmountConstrained
    * processing account.
    * </p>
    */
-  pspMerchantUrl?: string;
+  PSPMerchantURL?: string;
 
   /**
    * VISA category codes describing the merchant's nature of business.
@@ -93,7 +93,7 @@ export interface WithdrawRequestDataAttributes extends AbstractAmountConstrained
    * processing account.
    * </p>
    */
-  merchantCategoryCode?: string;
+  MerchantCategoryCode?: string;
 
   /**
    * Information about the Payer (ultimate debtor).
@@ -102,5 +102,5 @@ export interface WithdrawRequestDataAttributes extends AbstractAmountConstrained
    * Trustly Partners that are using Express Merchant Onboarding and aggregate traffic under a master processing account (other cases may
    * also apply).
    */
-  senderInformation?: RecipientOrSenderInformation;
+  SenderInformation?: RecipientOrSenderInformation;
 }

@@ -4,9 +4,6 @@ import {IWithRejectionResult} from '../../base/IWithRejectionResult';
 
 export interface CancelChargeResponseData extends AbstractResponseResultData, IWithRejectionResult {
 
-
-  // result: boolean;
-
-
+  // result: StringBoolean;
   // rejected?: string;
 }
