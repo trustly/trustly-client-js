@@ -25,12 +25,12 @@ export interface TrustlyApiClientSettingsData {
   /**
    * Default is true
    */
-  includeMessageInNotificationResponse?: boolean;
+  includeMessageInNotificationResponse: boolean;
 
   /**
    * Default is false
    */
-  includeExceptionMessageInNotificationResponse?: boolean;
+  includeExceptionMessageInNotificationResponse: boolean;
 }
 
 export class TrustlyApiClientSettings {
