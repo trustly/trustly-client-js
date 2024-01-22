@@ -22,9 +22,15 @@ export interface TrustlyApiClientSettingsData {
 
   trustlyPublicKey: crypto.KeyObject;
 
-  includeMessageInNotificationResponse: boolean;
+  /**
+   * Default is true
+   */
+  includeMessageInNotificationResponse?: boolean;
 
-  includeExceptionMessageInNotificationResponse: boolean;
+  /**
+   * Default is false
+   */
+  includeExceptionMessageInNotificationResponse?: boolean;
 }
 
 export class TrustlyApiClientSettings {
