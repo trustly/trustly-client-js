@@ -137,4 +137,11 @@ export interface DepositRequestDataAttributes extends DepositAbstractAmountConst
    * cases may also apply).
    */
   RecipientInformation?: RecipientOrSenderInformation;
+
+  /**
+   * Trustly will send a KYC notification to the merchant’s NotificationURL if the attribute "RequestKYC" : "1" is sent in a Deposit API call.
+   * The KYC notification should be expected after the end user has performed a successful login to their bank, and always before a deposit
+   * transfer is initiated.
+   */
+  RequestKYC?: string;
 }
