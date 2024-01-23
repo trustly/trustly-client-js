@@ -13,32 +13,7 @@ export interface NotificationResponder {
   writeBody(value: string): Promise<void>;
 }
 
-// export class DefaultNotificationResponder implements NotificationResponder {
-//
-//   private readonly response: http.IncomingMessage;
-//
-//   public constructor(response: http.IncomingMessage) {
-//     this.response = response;
-//   }
-//
-//   public addHeader(key: string, value: string): void {
-//     this.response.headers[key] = value;
-//   }
-//
-//   public setStatus(httpStatus: number): void {
-//     this.response.statusCode = httpStatus;
-//   }
-//
-//   public writeBody(_value: string): Promise<void> {
-//     throw new Error(`Not implemented writing body`);
-//   }
-// }
-
 export class TrustlyApiClientExtensions {
-
-  // public static handleNotificationToHttp(request: string | ArrayBuffer, response: http.IncomingMessage): Promise<void> {
-  //   return TrustlyApiClientExtensions.handleNotificationRequest(request, new DefaultNotificationResponder(response));
-  // }
 
   /**
    * Will deserialize, verify and validate the incoming payload for you.
