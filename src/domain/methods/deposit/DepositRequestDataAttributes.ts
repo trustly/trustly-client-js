@@ -2,7 +2,7 @@ import {AbstractAmountConstrainedAccountDataAttributes} from '../../common/Abstr
 import {RecipientOrSenderInformation} from '../../common/RecipientOrSenderInformation';
 
 type DepositAbstractAmountConstrainedAccountDataAttributes = AbstractAmountConstrainedAccountDataAttributes
-  & Required<Pick<AbstractAmountConstrainedAccountDataAttributes, 'ShopperStatement' | 'Email' | 'MobilePhone' | 'Firstname' | 'Lastname'>>;
+  & Required<Pick<AbstractAmountConstrainedAccountDataAttributes, 'ShopperStatement' | 'Email' | 'Firstname' | 'Lastname'>>;
 
 export interface DepositRequestDataAttributes extends DepositAbstractAmountConstrainedAccountDataAttributes {
 

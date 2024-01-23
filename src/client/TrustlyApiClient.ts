@@ -661,13 +661,13 @@ export class TrustlyApiClient {
    * @throws TrustlyValidationException If the response data could not be properly validated.
    * @throws TrustlySignatureException If the signature of the response could not be properly verified.
    */
-  public handleNotification<D extends IFromTrustlyRequestData>(
+  public async handleNotification<D extends IFromTrustlyRequestData>(
     jsonString: string,
     onOK?: NotificationOkHandler,
     onFailed?: NotificationFailHandler,
   ): Promise<void> {
 
-    const jsonToken = JSON.parse(jsonString) as Record<string, unknown>; // this.objectMapper.readTree(jsonString);
+    const jsonToken = JSON.parse(jsonString) as Record<string, unknown>;
     let methodValue: string;
     if ('method' in jsonToken && typeof jsonToken.method == 'string') {
       methodValue = jsonToken.method;
@@ -677,7 +677,7 @@ export class TrustlyApiClient {
 
     let meta = this.onNotification.get(methodValue);
     if (!meta || meta.listeners.length == 0) {
-      console.log(`There is no listener for incoming notification '${methodValue}'. Will fallback on 'unknown' listener`);
+      console.warn(`There is no listener for incoming notification '${methodValue}'. Will fallback on 'unknown' listener`);
       meta = this.onNotification.get('');
       if (!meta || meta.listeners.length == 0) {
         return Promise.reject(new TrustlyNoNotificationListenerException(`There is no listener for incoming notification '${methodValue}' nor unknown`));
@@ -687,9 +687,9 @@ export class TrustlyApiClient {
     // TODO: There needs to be special consideration for some fields here, like the string booleans
     const rpcRequest: NotificationRequest<D> = JSON.parse(jsonString) as NotificationRequest<D>;
 
-    // Verify the notification (RpcRequest from Trustly) signature.
-
     try {
+
+      // Verify the notification (RpcRequest from Trustly) signature.
       this.signer.verifyNotificationRequest(rpcRequest);
     } catch (ex) {
       if (ex instanceof TrustlySignatureException) {
