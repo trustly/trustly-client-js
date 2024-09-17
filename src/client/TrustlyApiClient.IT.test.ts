@@ -3,6 +3,7 @@ import {TrustlyApiClientSettings} from "./TrustlyApiClientSettings";
 import {TrustlyApiClient} from "./TrustlyApiClient";
 import * as uuid from 'uuid';
 import {TrustlyErrorResponseException} from "../domain/exceptions/TrustlyErrorResponseException";
+import {PartyTypeKind} from "../domain/models";
 
 /**
  * These test will only work if a local environment exists. At the USER_HOME root these files is needed: trustly_client_username.txt - your
@@ -62,7 +63,7 @@ describe('serialize', () => {
         MerchantCategoryCode: ("5499"),
         PSPMerchantURL: ("www.merchant.com"),
         SenderInformation: {
-          Partytype: ("PERSON"),
+          Partytype: PartyTypeKind.PERSON,
           Address: ("Street 1, 12345 Barcelona"),
           CountryCode: ("SE"),
           Firstname: ("Steve"),

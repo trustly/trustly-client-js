@@ -1,5 +1,0 @@
-import {AbstractCreditDebitPendingPayoutNotificationData} from './AbstractCreditDebitPendingPayoutNotificationData';
-
-export interface CreditNotificationData extends AbstractCreditDebitPendingPayoutNotificationData {
-
-}

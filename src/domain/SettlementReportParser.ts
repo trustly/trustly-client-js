@@ -1,4 +1,4 @@
-import {SettlementReportResponseDataEntry} from './SettlementReportResponseDataEntry';
+import {OrderType, SettlementReportResponseDataEntry} from "./models";
 
 type Mapper = (row: SettlementReportResponseDataEntry, original: string) => void
 
@@ -18,8 +18,13 @@ export class SettlementReportParser {
     this.addMapper('accountname', (row, v) => row.accountName = v);
     this.addMapper('currency', (row, v) => row.currency = v);
     this.addMapper('messageid', (row, v) => row.messageId = v);
-    this.addMapper('orderid', (row, v) => row.orderId = v);
-    this.addMapper('ordertype', (row, v) => row.orderType = v);
+    this.addMapper('orderid', (row, v) => row.orderid = v);
+    this.addMapper('ordertype', (row, v) => {
+      if (Object.values(OrderType).map(it => it as string).indexOf(v) == -1) {
+        console.warn(`Unknown OrderType '${v}', will silently pass through as if an OrderType`);
+      }
+      row.orderType = v as OrderType;
+    });
     this.addMapper('username', (row, v) => row.username = v);
     this.addMapper('fxpaymentcurrency', (row, v) => row.fxPaymentCurrency = v);
     this.addMapper('settlementbankwithdrawalid', (row, v) => row.settlementBankWithdrawalId = v);
@@ -31,24 +36,27 @@ export class SettlementReportParser {
 
     this.addMapper('datestamp', (row, v) => {
 
+      row.datestamp = v;
+
+      // TODO: Reintroduce?
       // 2014-03-31 11:50:06.46106+00
-      const regex = /^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})[T ]([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})\.?([0-9]{0,8})(?:\+([0-9]{1,2}))?$/g;
-
-      for (const match of v.matchAll(regex)) {
-
-        const [year, month, day, hours, minutes, seconds, ms] =
-          [
-            parseInt(match[1]), parseInt(match[2]), parseInt(match[3]), parseInt(match[4]), parseInt(match[5]), parseInt(match[6]),
-            match[7] ? parseInt(match[7]) : 0
-          ];
-
-        if (year) {
-          row.datestamp = new Date(year, month, day, hours, minutes, seconds, ms);
-          return;
-        }
-      }
-
-      throw new Error('Unknown date format exception');
+      // const regex = /^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})[T ]([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})\.?([0-9]{0,8})(?:\+([0-9]{1,2}))?$/g;
+      //
+      // for (const match of v.matchAll(regex)) {
+      //
+      //   const [year, month, day, hours, minutes, seconds, ms] =
+      //     [
+      //       parseInt(match[1]), parseInt(match[2]), parseInt(match[3]), parseInt(match[4]), parseInt(match[5]), parseInt(match[6]),
+      //       match[7] ? parseInt(match[7]) : 0
+      //     ];
+      //
+      //   if (year) {
+      //     row.datestamp = new Date(year, month, day, hours, minutes, seconds, ms);
+      //     return;
+      //   }
+      // }
+      //
+      // throw new Error('Unknown date format exception');
     });
   }
 

@@ -1,4 +1,3 @@
-import {IFromTrustlyRequestData} from '../domain/base/IFromTrustlyRequestData';
 import {NotificationArgs} from './NotificationArgs';
 
-export type NotificationListener<D extends IFromTrustlyRequestData> = (args: NotificationArgs<D>) => Promise<void>;
+export type NotificationListener<M extends string> = (args: NotificationArgs<M>) => Promise<void>;

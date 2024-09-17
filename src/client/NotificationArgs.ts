@@ -1,43 +1,26 @@
-import {IRequestParamsData} from '../domain/base/IRequestParamsData';
+import {NotificationAckTypes, NotificationTypes} from "./TrustlyApiClient";
 
-export type NotificationOkHandler = (method: string, uuid: string) => Promise<void>;
+export type NotificationResponseHandler<M extends string> =
+  (method: M, uuid: string, response: NotificationAckTypes[M]) => Promise<void>;
 
-export type NotificationFailHandler = (method: string, uuid: string, message: string) => Promise<void>;
+export class NotificationArgs<M extends string> {
 
-export class NotificationArgs<D extends IRequestParamsData> {
-
-  readonly data: D;
-
-  readonly method: string;
+  readonly data: NotificationTypes[M];
+  readonly method: M;
   readonly uuid: string;
 
-  readonly onOK?: NotificationOkHandler;
-  readonly onFailed?: NotificationFailHandler;
+  readonly onResponse?: NotificationResponseHandler<M>;
 
-  constructor(data: D, method: string, uuid: string, onOK?: NotificationOkHandler, onFailed?: NotificationFailHandler) {
+  constructor(method: M, data: NotificationTypes[M], uuid: string, onResponse?: NotificationResponseHandler<M>) {
     this.data = data;
     this.method = method;
     this.uuid = uuid;
-    if (onOK) {
-      this.onOK = onOK;
-    }
-
-    if (onFailed) {
-      this.onFailed = onFailed;
-    }
+    this.onResponse = onResponse;
   }
 
-  public respondWithOk(): Promise<void> {
-    if (this.onOK) {
-      return this.onOK(this.method, this.uuid);
-    } else {
-      return Promise.resolve();
-    }
-  }
-
-  public respondWithFailed(message: string): Promise<void> {
-    if (this.onFailed) {
-      return this.onFailed(this.method, this.uuid, message);
+  public respondWith(response: NotificationAckTypes[M]): Promise<void> {
+    if (this.onResponse) {
+      return this.onResponse(this.method, this.uuid, response);
     } else {
       return Promise.resolve();
     }

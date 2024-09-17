@@ -1,17 +1,20 @@
 import {TrustlyApiClientSettingsData} from './TrustlyApiClientSettings';
 import {Serializer} from './Serializer';
-import {JsonRpcRequest} from '../domain/base/JsonRpcRequest';
-import {IRequestParamsData} from '../domain/base/IRequestParamsData';
-import {JsonRpcResponse} from '../domain/base/JsonRpcResponse';
-import {IResponseResultData} from '../domain/base/IResponseResultData';
 import {JsonRpcSigner} from './JsonRpcSigner';
-import {IData} from '../domain/base/IData';
-import {IRequest} from '../domain/base/IRequest';
-import {IRequestParams} from '../domain/base/IRequestParams';
 import {TrustlyStringUtils} from '../util/TrustlyStringUtils';
-import {WithoutSignature} from '../domain/base/modifiers/WithoutSignature';
+import {WithoutSignature} from '../domain/WithoutSignature';
 import * as crypto from 'crypto';
-import {NotificationRequest} from "../domain/base/NotificationRequest";
+import {
+  AbstractRequestData,
+  AbstractRequestDataAttributes,
+  JsonRpcErrorResponse,
+  JsonRpcNotification,
+  JsonRpcNotificationParams,
+  JsonRpcRequest,
+  JsonRpcRequestParams,
+  JsonRpcResponse,
+  ResponseResult
+} from "../domain/models";
 
 export class DefaultJsonRpcSigner implements JsonRpcSigner {
 
@@ -27,7 +30,7 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
     return `${method}${uuid}${serializedData}`;
   }
 
-  public signRequest<D extends IRequestParamsData, T extends JsonRpcRequest<D>>(v: WithoutSignature<T>): JsonRpcRequest<D> {
+  public signRequest<TReqData extends AbstractRequestData<AbstractRequestDataAttributes>, M extends string>(v: WithoutSignature<JsonRpcRequest<JsonRpcRequestParams<TReqData>, M>>): JsonRpcRequest<JsonRpcRequestParams<TReqData>, M> {
 
     const signature = this.createSignature(v.method, v.params.UUID, v.params.Data);
 
@@ -40,10 +43,10 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
     };
   }
 
-  public signResponse<D extends IResponseResultData, T extends JsonRpcResponse<D> = JsonRpcResponse<D>>(response: WithoutSignature<T>): JsonRpcResponse<D> {
+  public signResponse<TResData, M extends string>(response: WithoutSignature<JsonRpcResponse<ResponseResult<TResData, M>>>): JsonRpcResponse<ResponseResult<TResData, M>> {
 
     if (response.result) {
-      const signature = this.createSignature(response.result.method, response.result.uuid, response.result.data);
+      const signature = this.createSignature(response.result.method, response.result.uuid, response.result.data as object);
       return {
         ...response,
         result: {
@@ -52,24 +55,28 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
         }
       };
 
-    } else if (response.error && response.error.error) {
-      const signature = this.createSignature(response.error.error.method, response.error.error.uuid, response.error.error.data);
-      return {
-        ...response,
-        error: {
-          ...response.error,
-          error: {
-            ...response.error.error,
-            signature: signature,
-          },
-        },
-      };
     } else {
       throw new Error(`There must be either a result or an error`);
     }
   }
 
-  private createSignature<T extends IData>(method: string, uuid: string, data: T): string {
+  public signErrorResponse(response: WithoutSignature<JsonRpcErrorResponse>): JsonRpcErrorResponse {
+
+    const error = response.error.error!;
+    const signature = this.createSignature(error.method, error.uuid, error.data);
+    return {
+      ...response,
+      error: {
+        ...response.error,
+        error: {
+          ...error,
+          signature: signature,
+        },
+      },
+    };
+  }
+
+  private createSignature<T extends object>(method: string, uuid: string, data: T): string {
     const serializedData = this.serializer.serializeData(data);
     const plainText = this.createPlaintext(serializedData, method, uuid);
 
@@ -78,30 +85,30 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
     return sign.sign(this.settings.clientPrivateKey, 'base64');
   }
 
-  public verifyRequest<D extends IRequestParamsData, P extends IRequestParams<D>>(request: IRequest<P>): void {
+  verifyRequest<M extends string, D extends AbstractRequestData<AbstractRequestDataAttributes>, P extends JsonRpcRequestParams<D>>(request: JsonRpcRequest<P, M>): void {
 
-    const uuid = request.params.UUID;
-    const signature = request.params.Signature;
-    const data = request.params.Data;
-
-    this.verify(request.method, uuid, signature, data);
-  }
-
-  public verifyNotificationRequest<D extends IRequestParamsData>(request: NotificationRequest<D>): void {
-
-    const uuid = request.params.uuid;
-    const signature = request.params.signature;
-    const data = request.params.data;
+    const uuid = request.params?.UUID as string;
+    const signature = request.params?.Signature as string;
+    const data = request.params?.Data as object;
 
     this.verify(request.method, uuid, signature, data);
   }
 
-  public verifyResponse<T extends IResponseResultData>(response: JsonRpcResponse<T>): void {
+  verifyNotificationRequest<M extends string, D, P extends JsonRpcNotificationParams<D>>(request: JsonRpcNotification<P, M>): void {
 
-    const method = response.result ? response.result.method : response.error?.error?.method;
-    const uuid = response.result ? response.result.uuid : response.error?.error?.uuid;
-    const signature = response.result ? response.result.signature : response.error?.error?.signature;
-    const data = response.result ? response.result.data : response.error?.error?.data;
+    const uuid = request.params?.uuid as string;
+    const signature = request.params?.signature as string;
+    const data = request.params?.data as object;
+
+    this.verify(request.method, uuid, signature, data);
+  }
+
+  public verifyResponse<M extends string, D, TRes extends ResponseResult<D, M>>(response?: JsonRpcResponse<TRes>): void {
+
+    const method = response?.result.method;
+    const uuid = response?.result.uuid;
+    const signature = response?.result.signature;
+    const data = response?.result.data;
 
     if (!method || !uuid || !signature || !data) {
       throw new Error(`Missing the method, uuid, signature or data from the response`);
@@ -110,7 +117,22 @@ export class DefaultJsonRpcSigner implements JsonRpcSigner {
     this.verify(method, uuid, signature, data);
   }
 
-  private verify(method: string, uuid: string, expectedSignature: string, data: IData, dataNode?: Record<string, unknown>): void {
+  public verifyErrorResponse(response?: JsonRpcErrorResponse): void {
+
+    const error = response?.error?.error as Record<string, unknown>;
+    const method = error.method as string;
+    const uuid = error.uuid as string;
+    const signature =  error.signature as string;
+    const data = error.data as object;
+
+    if (!method || !uuid || !signature || !data) {
+      throw new Error(`Missing the method, uuid, signature or data from the response`);
+    }
+
+    this.verify(method, uuid, signature, data);
+  }
+
+  private verify(method: string, uuid: string, expectedSignature: string, data: object, dataNode?: Record<string, unknown>): void {
 
     if (TrustlyStringUtils.isBlank(expectedSignature)) {
       throw new Error('There was no expected signature given. The payload seems malformed');

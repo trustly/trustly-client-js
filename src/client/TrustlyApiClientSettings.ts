@@ -23,11 +23,6 @@ export interface TrustlyApiClientSettingsData {
   trustlyPublicKey: crypto.KeyObject;
 
   /**
-   * Default is true
-   */
-  includeMessageInNotificationResponse: boolean;
-
-  /**
    * Default is false
    */
   includeExceptionMessageInNotificationResponse: boolean;
@@ -434,7 +429,6 @@ export class TrustlyApiClientSettingsWithClientCertificates {
       clientPublicKey: settings.clientPublicKey,
       clientPrivateKey: settings.clientPrivateKey,
       trustlyPublicKey: settings.trustlyPublicKey,
-      includeMessageInNotificationResponse: settings.includeMessageInNotificationResponse ?? true,
       includeExceptionMessageInNotificationResponse: settings.includeExceptionMessageInNotificationResponse ?? false
     };
   }

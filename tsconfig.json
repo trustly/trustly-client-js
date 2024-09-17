@@ -20,6 +20,8 @@
     "noUnusedParameters": true,
     "strictNullChecks": true,
     "exactOptionalPropertyTypes": false,
+
+    "allowArbitraryExtensions": true
   },
   "include": [
     "src/**/*.ts"
