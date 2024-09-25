@@ -11,7 +11,7 @@
     "trustly",
     "api"
   ],
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/trustly/trustly-client-js.git"

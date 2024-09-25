@@ -80,7 +80,7 @@ const response = await client.deposit({
     Firstname: "John",
     Lastname: "Doe",
     Email: "name@company.com",
-    MobilePhone: "070-123 45 67",
+    MobilePhone: "070-433 56 57",
     Country: "SE",
     Locale: "sv_SE",
     ShopperStatement: "Trustly Test Deposit",
@@ -128,10 +128,6 @@ import { TrustlyApiClient, TrustlyApiClientSettings, TrustlyApiClientExtensions 
 import express from "express";
 
 const client = new TrustlyApiClient(TrustlyApiClientSettings.forDefaultProduction());
-client.addNotificationListener('debit', async (args) => {
-  // ... do something with the notification
-  await args.respondWith('OK');
-});
 
 const app = express();
 
@@ -162,14 +158,14 @@ If no event listener on a client responds with `OK` nor `Failed` an exception wi
 
 ---
 
-2. Or Manually, by calling on `client.handleNotification(jsonBody: string, onResponse?: NotificationResponseHandler)`.
+2. Or Manually, by calling on `client.handleNotification(jsonBody: string, onOK?: NotificationOkHandler, onFailed?: NotificationOkHandler)`.
 
 ```TypeScript
-export type NotificationResponseHandler = (method: string, uuid: string, status: 'OK' | 'FAILED' | 'CONTINUE', message?: string) => Promise<void>;
+export type NotificationOkHandler = (method: string, uuid: string) => Promise<void>;
 ```
 
 This will *not* automatically send an `OK` or `Failed` response back to the Trustly server.
 
-Instead you need to implement the `onResponse` callback, if you want to use the event args' callback methods.
+Instead you need to implement the `onOK` and `onFailed` callbacks, if you want to use the event args' callback methods.
 
 If you will not use the event args' callback methods, then you do not need to supply these callback arguments, and can respond with a JsonRpc response manually.

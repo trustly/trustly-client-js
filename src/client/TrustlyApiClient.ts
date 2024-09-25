@@ -689,7 +689,6 @@ export class TrustlyApiClient {
       }
     }
 
-    // TODO: There needs to be special consideration for some fields here, like the string booleans
     const rpcRequest = JSON.parse(jsonString) as JsonRpcNotification<JsonRpcNotificationParams<NotificationTypes[M]>, M>;
 
     try {
