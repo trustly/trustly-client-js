@@ -4,15 +4,13 @@ import * as uuid from 'uuid';
 import express from 'express';
 import {Server} from "http";
 import {AddressInfo} from "net";
-import {DepositRequestData} from "../domain/methods/deposit/DepositRequestData";
-import {DepositResponseData} from "../domain/methods/deposit/DepositResponseData";
-import {JsonRpcResponse} from "../domain/base/JsonRpcResponse";
+import {DepositRequestData, DepositResponseData} from "../domain/models";
 
 // TODO:
 // * Make the ApiClient into a Core client, and then add Method functions to it by using a union builder of some sorts
 //    - This way it would be easy to extend the client with custom methods, and lessen the number of imports in client
 
-const createInvalidRpcResponse = (): JsonRpcResponse<DepositResponseData> => {
+const createInvalidRpcResponse = () => {
 
   const settings = TrustlyApiClientSettings
     .forTest()

@@ -1,11 +1,10 @@
-import {JsonRpcRequest} from '../domain/base/JsonRpcRequest';
-import {IRequestParamsData} from '../domain/base/IRequestParamsData';
 import * as u from 'uuid';
-import {WithoutSignature} from '../domain/base/modifiers/WithoutSignature';
+import {WithoutSignature} from '../domain/WithoutSignature';
+import {AbstractRequestData, AbstractRequestDataAttributes, JsonRpcRequest, JsonRpcRequestParams} from "../domain/models";
 
 export class JsonRpcFactory {
 
-  public create<D extends IRequestParamsData>(requestData: D, method: string, uuid?: string): WithoutSignature<JsonRpcRequest<D>> {
+  public create<M extends string, D extends AbstractRequestData<AbstractRequestDataAttributes>>(requestData: D, method: M, uuid?: string): WithoutSignature<JsonRpcRequest<JsonRpcRequestParams<D>, M>> {
 
     if (!uuid) {
       uuid = u.v4().toString();

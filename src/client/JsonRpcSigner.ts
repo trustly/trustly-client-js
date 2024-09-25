@@ -1,21 +1,24 @@
-import {IRequestParamsData} from '../domain/base/IRequestParamsData';
-import {JsonRpcRequest} from '../domain/base/JsonRpcRequest';
-import {IResponseResultData} from '../domain/base/IResponseResultData';
-import {JsonRpcResponse} from '../domain/base/JsonRpcResponse';
-import {IRequestParams} from '../domain/base/IRequestParams';
-import {IRequest} from '../domain/base/IRequest';
-import {WithoutSignature} from '../domain/base/modifiers/WithoutSignature';
-import {NotificationRequest} from "../domain/base/NotificationRequest";
+import {WithoutSignature} from '../domain/WithoutSignature';
+import {
+  AbstractRequestData,
+  AbstractRequestDataAttributes, JsonRpcErrorResponse, JsonRpcNotification, JsonRpcNotificationParams,
+  JsonRpcRequest,
+  JsonRpcRequestParams,
+  JsonRpcResponse,
+  ResponseResult
+} from "../domain/models";
 
 export interface JsonRpcSigner {
 
-  signRequest<D extends IRequestParamsData, T extends JsonRpcRequest<D>>(request: WithoutSignature<T>): JsonRpcRequest<D>;
+  signRequest<TReqData extends AbstractRequestData<AbstractRequestDataAttributes>, M extends string>(request: WithoutSignature<JsonRpcRequest<JsonRpcRequestParams<TReqData>, M>>): JsonRpcRequest<JsonRpcRequestParams<TReqData>, M>;
 
-  signResponse<D extends IResponseResultData, T extends JsonRpcResponse<D>>(response: WithoutSignature<T>): JsonRpcResponse<D>;
+  signResponse<TResData, M extends string>(response: WithoutSignature<JsonRpcResponse<ResponseResult<TResData, M>>>): JsonRpcResponse<ResponseResult<TResData, M>>;
+  signErrorResponse(response: WithoutSignature<JsonRpcErrorResponse>): JsonRpcErrorResponse;
 
-  verifyRequest<D extends IRequestParamsData, P extends IRequestParams<D>>(request: IRequest<P>): void;
+  verifyRequest<M extends string, D extends AbstractRequestData<AbstractRequestDataAttributes>, P extends JsonRpcRequestParams<D>>(request: JsonRpcRequest<P, M>): void;
 
-  verifyNotificationRequest<D extends IRequestParamsData>(request: NotificationRequest<D>): void;
+  verifyNotificationRequest<M extends string, D, P extends JsonRpcNotificationParams<D>>(request: JsonRpcNotification<P, M>): void;
 
-  verifyResponse<T extends IResponseResultData>(response?: JsonRpcResponse<T>): void;
+  verifyResponse<M extends string, D, TRes extends ResponseResult<D, M>>(response?: JsonRpcResponse<TRes>): void;
+  verifyErrorResponse(response?: JsonRpcErrorResponse): void;
 }

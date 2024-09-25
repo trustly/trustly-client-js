@@ -7,11 +7,17 @@ import cert_merchant_private from '../../resources/keys/merchant_private_key.pem
 import {TrustlyApiClient} from "./TrustlyApiClient";
 import {TrustlyApiClientExtensions} from "./TrustlyApiClientExtensions";
 import {JsonRpcSigner} from "./JsonRpcSigner";
-import {IData} from "../domain/base/IData";
-import {IResponseResultData} from "../domain/base/IResponseResultData";
-import {JsonRpcRequest} from "../domain/base/JsonRpcRequest";
-import {JsonRpcResponse} from "../domain/base/JsonRpcResponse";
-import {WithoutSignature} from "../domain/base/modifiers/WithoutSignature";
+import {WithoutSignature} from "../domain/WithoutSignature";
+import {
+  AbstractRequestData,
+  AbstractRequestDataAttributes,
+  AckDataStatus,
+  JsonRpcErrorResponse,
+  JsonRpcRequest,
+  JsonRpcRequestParams,
+  JsonRpcResponse,
+  ResponseResult
+} from "../domain/models";
 
 const cancelBody = {
   "method": "cancel",
@@ -43,7 +49,7 @@ const unknownBody = {
 
 class NoOpJsonRpcSigner implements JsonRpcSigner {
 
-  signRequest<D extends IData, T extends JsonRpcRequest<D>>(request: WithoutSignature<T>): JsonRpcRequest<D> {
+  signRequest<TReqData extends AbstractRequestData<AbstractRequestDataAttributes>, M extends string>(request: WithoutSignature<JsonRpcRequest<JsonRpcRequestParams<TReqData>, M>>): JsonRpcRequest<JsonRpcRequestParams<TReqData>, M> {
     return {
       ...request,
       ...{
@@ -55,7 +61,8 @@ class NoOpJsonRpcSigner implements JsonRpcSigner {
     };
   }
 
-  signResponse<D extends IResponseResultData, T extends JsonRpcResponse<D>>(response: WithoutSignature<T>): JsonRpcResponse<D> {
+  signResponse<TResData, M extends string>(response: WithoutSignature<JsonRpcResponse<ResponseResult<TResData, M>>>): JsonRpcResponse<ResponseResult<TResData, M>> {
+
     if (response.result) {
       return {
         ...response,
@@ -66,22 +73,24 @@ class NoOpJsonRpcSigner implements JsonRpcSigner {
           },
         },
       };
-    } else if (response.error?.error) {
-      return {
-        ...response,
-        ...{
-          error: {
-            ...response.error,
-            error: {
-              ...response.error.error,
-              signature: 'no-op signature',
-            },
-          },
-        },
-      };
     } else {
       throw new Error(`There must be at least a result or an error`);
     }
+  }
+
+  signErrorResponse(response: WithoutSignature<JsonRpcErrorResponse>): JsonRpcErrorResponse {
+    return {
+      ...response,
+      ...{
+        error: {
+          ...response.error,
+          error: {
+            ...response.error.error!,
+            signature: 'no-op signature',
+          },
+        },
+      },
+    };
   }
 
   verifyRequest(): void {
@@ -94,6 +103,10 @@ class NoOpJsonRpcSigner implements JsonRpcSigner {
 
   verifyResponse(): void {
     console.log(`no-op verifyResponse`);
+  }
+
+  verifyErrorResponse(): void {
+    console.log(`no-op verifyErrorResponse`);
   }
 }
 
@@ -112,8 +125,11 @@ describe('notifications', () => {
     let receivedNotificationDataCounter = 0;
 
     client.addNotificationListener('cancel', (args) => {
+
       receivedNotificationDataCounter++;
-      return args.respondWithOk();
+      return args.respondWith({
+        status: AckDataStatus.OK,
+      });
     });
 
     const headers: Record<string, unknown> = {};
@@ -146,9 +162,12 @@ describe('notifications', () => {
 
     let receivedUnknownValue: unknown = undefined;
 
-    client.addNotificationListener('foo', (args) => {
+    client.addNotificationListener('foo', args => {
+
       receivedUnknownValue = args.data['something'];
-      return args.respondWithOk();
+      return args.respondWith({
+        status: AckDataStatus.OK,
+      });
     });
 
     const headers: Record<string, unknown> = {};

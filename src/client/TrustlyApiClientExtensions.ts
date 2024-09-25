@@ -1,8 +1,5 @@
 import {TrustlyNoNotificationClientException} from '../domain/exceptions/TrustlyNoNotificationClientException';
-import {TrustlyApiClient} from './TrustlyApiClient';
-import {NotificationResponse} from '../domain/base/NotificationResponse';
-import {JsonRpcResponse} from '../domain/base/JsonRpcResponse';
-import {TrustlyStringUtils} from '../util/TrustlyStringUtils';
+import {NotificationAckTypes, TrustlyApiClient} from './TrustlyApiClient';
 
 export interface NotificationResponder {
 
@@ -45,17 +42,36 @@ export class TrustlyApiClientExtensions {
 
     let responseCount = 0;
 
+    // try {
     await client.handleNotification(
       requestStringBody,
-      (method, uuid) => {
+      (method, uuid, response) => {
         responseCount++;
-        return TrustlyApiClientExtensions.respond(client, responder, method, uuid, 'OK', undefined, 200);
-      },
-      (method, uuid, message) => {
-        responseCount++;
-        return TrustlyApiClientExtensions.respond(client, responder, method, uuid, 'FAILED', message, 500);
+        return TrustlyApiClientExtensions.respond(client, responder, method, uuid, response, 200);
       },
     );
+    // } catch (ex) {
+    //
+    //   if (client.getSettings().includeExceptionMessageInNotificationResponse) {
+    //
+    //     const message = ((ex instanceof Error) ? ex.message : JSON.stringify(ex));
+    //     return TrustlyApiClientExtensions.respond(client, responder, method, uuid, response, 200);
+    //
+    //   } else {
+    //     throw ex;
+    //   }
+    //
+    //   // if (onResponse) {
+    //   //
+    //   //   // const response = {
+    //   //   //   status: 'FAILED'
+    //   //   // } as NotificationResponseDataBase<NotificationAckTypes[M]>;
+    //   //
+    //   //   return onResponse(args.method, rpcRequest.params.uuid, response, message);
+    //   // } else {
+    //   // return Promise.reject(new Error(message));
+    //   // }
+    // }
 
     if (responseCount === 0) {
       throw new TrustlyNoNotificationClientException(
@@ -63,44 +79,16 @@ export class TrustlyApiClientExtensions {
     }
   }
 
-  public static respond(
+  public static respond<M extends string>(
     client: TrustlyApiClient,
     responder: NotificationResponder,
-    method: string,
+    method: M,
     uuid: string,
-    status: 'OK' | 'FAILED',
-    message: string | undefined,
+    notificationResponse: NotificationAckTypes[M],
     httpStatusCode: number,
   ): Promise<void> {
 
-    const notificationResponse: NotificationResponse = {
-      status: status,
-    };
-
-    let rpcResponse: JsonRpcResponse<NotificationResponse> = client.createResponsePackage(method, uuid, notificationResponse);
-
-    if (client.getSettings().includeMessageInNotificationResponse && !TrustlyStringUtils.isBlank(message)) {
-
-      if (rpcResponse.result) {
-        rpcResponse = {
-          ...rpcResponse,
-          result: {
-            ...rpcResponse.result,
-            data: {
-              ...rpcResponse.result.data,
-              message: message,
-            },
-          },
-        };
-      } else {
-        rpcResponse = {
-          ...rpcResponse,
-          error: {
-            ...rpcResponse.error,
-          },
-        };
-      }
-    }
+    const rpcResponse = client.createResponsePackage(method, uuid, notificationResponse);
 
     const rpcString = JSON.stringify(rpcResponse);
 

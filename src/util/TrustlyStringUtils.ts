@@ -1,6 +1,6 @@
 export class TrustlyStringUtils {
 
-  public static isBlank(value?: string | null | undefined): boolean {
+  public static isBlank(value?: string | null | undefined) {
 
     if (!value) {
       return true;

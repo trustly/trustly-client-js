@@ -2,91 +2,81 @@ import {HttpRequesterLoader} from '../request/HttpRequesterLoader';
 import {HttpRequester} from '../request/HttpRequester';
 import {TrustlyApiClientSettingsData} from './TrustlyApiClientSettings';
 import {NodeJsHttpRequesterLoader} from '../request/NodeJsHttpRequesterLoader';
-import {IFromTrustlyRequestData} from '../domain/base/IFromTrustlyRequestData';
 import {JsonRpcFactory} from './JsonRpcFactory';
 import {JsonRpcSigner} from './JsonRpcSigner';
-import {AccountLedgerRequestData} from '../domain/methods/accountledger/AccountLedgerRequestData';
-import {AccountLedgerResponseData} from '../domain/methods/accountledger/AccountLedgerResponseData';
 import {DefaultJsonRpcSigner} from './DefaultJsonRpcSigner';
 import {Serializer} from './Serializer';
-
-import {AccountPayoutRequestData} from '../domain/methods/accountpayout/AccountPayoutRequestData';
-import {AccountPayoutResponseData} from '../domain/methods/accountpayout/AccountPayoutResponseData';
-
-import {ApproveWithdrawalRequestData} from '../domain/methods/approvewithdrawal/ApproveWithdrawalRequestData';
-import {ApproveWithdrawalResponseData} from '../domain/methods/approvewithdrawal/ApproveWithdrawalResponseData';
-
-import {DenyWithdrawalRequestData} from '../domain/methods/denywithdrawal/DenyWithdrawalRequestData';
-import {DenyWithdrawalResponseData} from '../domain/methods/denywithdrawal/DenyWithdrawalResponseData';
-
-import {BalanceRequestData} from '../domain/methods/balance/BalanceRequestData';
-import {BalanceResponseData} from '../domain/methods/balance/BalanceResponseData';
-
-import {ChargeRequestData} from '../domain/methods/charge/ChargeRequestData';
-import {ChargeResponseData} from '../domain/methods/charge/ChargeResponseData';
-
-import {CreateAccountRequestData} from '../domain/methods/createaccount/CreateAccountRequestData';
-import {CreateAccountResponseData} from '../domain/methods/createaccount/CreateAccountResponseData';
-
-import {RegisterAccountRequestData} from '../domain/methods/registeraccount/RegisterAccountRequestData';
-import {RegisterAccountResponseData} from '../domain/methods/registeraccount/RegisterAccountResponseData';
-
-import {RegisterAccountPayoutRequestData} from '../domain/methods/registeraccountpayout/RegisterAccountPayoutRequestData';
-import {RegisterAccountPayoutResponseData} from '../domain/methods/registeraccountpayout/RegisterAccountPayoutResponseData';
-
-import {SettlementReportRequestData} from '../domain/methods/settlementreport/SettlementReportRequestData';
-import {
-  SettlementReportResponseData,
-  UnparsedSettlementReportResponseData
-} from '../domain/methods/settlementreport/SettlementReportResponseData';
-
-import {CreditNotificationData} from '../domain/notifications/CreditNotificationData';
-import {CancelNotificationData} from '../domain/notifications/CancelNotificationData';
-import {AccountNotificationData} from '../domain/notifications/AccountNotificationData';
-import {UnknownNotificationData} from '../domain/notifications/UnknownNotificationData';
-import {PendingNotificationData} from '../domain/notifications/PendingNotificationData';
-import {PayoutConfirmationNotificationData} from '../domain/notifications/PayoutConfirmationNotificationData';
-import {DebitNotificationData} from '../domain/notifications/DebitNotificationData';
-
-import {IToTrustlyRequestParams} from '../domain/base/IToTrustlyRequestParams';
-import {IResponseResultData} from '../domain/base/IResponseResultData';
-import {IRequestParamsData} from '../domain/base/IRequestParamsData';
-
 import {TrustlyValidationException} from '../domain/exceptions/TrustlyValidationException';
 import {TrustlyErrorResponseException} from '../domain/exceptions/TrustlyErrorResponseException';
 import {TrustlyRejectionException} from '../domain/exceptions/TrustlyRejectionException';
 import {TrustlySignatureException} from '../domain/exceptions/TrustlySignatureException';
 import {TrustlyRequestException} from '../domain/exceptions/TrustlyRequestException';
-
-import {JsonRpcRequest} from '../domain/base/JsonRpcRequest';
-import {JsonRpcResponse, JsonRpcResponseWithResult} from '../domain/base/JsonRpcResponse';
-
 import {TrustlyStringUtils} from '../util/TrustlyStringUtils';
-
-import {IWithRejectionResult} from '../domain/base/IWithRejectionResult';
-import {WithdrawResponseData} from '../domain/methods/withdraw/WithdrawResponseData';
-import {WithdrawRequestData} from '../domain/methods/withdraw/WithdrawRequestData';
-import {CancelChargeResponseData} from '../domain/methods/cancelcharge/CancelChargeResponseData';
-import {CancelChargeRequestData} from '../domain/methods/cancelcharge/CancelChargeRequestData';
-import {SelectAccountResponseData} from '../domain/methods/selectaccount/SelectAccountResponseData';
-import {SelectAccountRequestData} from '../domain/methods/selectaccount/SelectAccountRequestData';
-import {RefundResponseData} from '../domain/methods/refund/RefundResponseData';
-import {RefundRequestData} from '../domain/methods/refund/RefundRequestData';
-import {DepositResponseData} from '../domain/methods/deposit/DepositResponseData';
-import {DepositRequestData} from '../domain/methods/deposit/DepositRequestData';
-import {GetWithdrawalsResponseData} from '../domain/methods/getwithdrawals/GetWithdrawalsResponseData';
-import {GetWithdrawalsRequestData} from '../domain/methods/getwithdrawals/GetWithdrawalsRequestData';
-import {WithoutSignature} from '../domain/base/modifiers/WithoutSignature';
-
 import {NotificationListener} from './NotificationListener';
-import {NotificationRequest} from '../domain/base/NotificationRequest';
-
-import {NotificationArgs, NotificationFailHandler, NotificationOkHandler} from './NotificationArgs';
+import {NotificationArgs, NotificationResponseHandler} from './NotificationArgs';
 import {TrustlyNoNotificationListenerException} from '../domain/exceptions/TrustlyNoNotificationListenerException';
-import {WithoutProvidedProperties} from "../domain/base/modifiers/WithoutProvidedProperties";
-import {SettlementReportParser} from "../domain/methods/settlementreport/SettlementReportParser";
-import {MerchantSettlementRequestData} from "../domain/methods/merchantsettlement/MerchantSettlementRequestData";
-import {MerchantSettlementResponseData} from "../domain/methods/merchantsettlement/MerchantSettlementResponseData";
+import {
+  AbstractRequestData,
+  AbstractRequestDataAttributes,
+  AccountLedgerRequestData,
+  AccountLedgerResponseResult,
+  AccountNotificationData,
+  AccountPayoutRequestData,
+  AccountPayoutResponseData,
+  AckDataStatus,
+  ApproveWithdrawalRequestData,
+  ApproveWithdrawalResponseData,
+  BalanceRequestData,
+  BalanceResponseResult,
+  CancelChargeRequestData,
+  CancelChargeResponseData,
+  CancelNotificationData,
+  ChargeRequestData,
+  ChargeResponseData,
+  CreateAccountRequestData,
+  CreateAccountResponseData,
+  CreditNotificationData,
+  DebitNotificationData,
+  DebitNotificationResponseData,
+  DenyWithdrawalRequestData,
+  DenyWithdrawalResponseData,
+  DepositRequestData,
+  DepositResponseData,
+  GetWithdrawalsRequestData,
+  GetWithdrawalsResponseResult,
+  JsonRpcErrorResponse,
+  JsonRpcNotification,
+  JsonRpcNotificationParams,
+  JsonRpcRequest,
+  JsonRpcRequestParams,
+  JsonRpcResponse,
+  KYCNotificationData,
+  KYCNotificationResponseData,
+  MerchantSettlementRequestData,
+  MerchantSettlementResponseData,
+  NotificationResponseDataBase,
+  PayoutConfirmationNotificationData,
+  PendingNotificationData,
+  RefundRequestData,
+  RefundResponseData,
+  RegisterAccountPayoutRequestData,
+  RegisterAccountPayoutResponseData,
+  RegisterAccountRequestData,
+  RegisterAccountResponseData,
+  ResponseResult,
+  SelectAccountRequestData,
+  SelectAccountResponseData,
+  SettlementReportRequestData,
+  SettlementReportResponseData,
+  SettlementReportResponseDataEntry,
+  WithdrawRequestData,
+  WithdrawResponseData,
+  WithRejection
+} from "../domain/models";
+import {UnknownNotificationData} from "../domain/UnknownNotificationData";
+import {SettlementReportParser} from "../domain/SettlementReportParser";
+import {WithoutProvidedProperties} from "../domain/WithoutProvidedProperties";
+import {FetchHttpRequesterLoader} from "../request/FetchHttpRequesterLoader";
 
 type KnownNotificationTypes = {
   account: AccountNotificationData,
@@ -95,20 +85,35 @@ type KnownNotificationTypes = {
   debit: DebitNotificationData,
   payoutconfirmation: PayoutConfirmationNotificationData,
   pending: PendingNotificationData,
+  kyc: KYCNotificationData,
 };
 
-type NotificationTypes = KnownNotificationTypes & { [k: string]: UnknownNotificationData };
+type KnownNotificationAckTypes = {
+  debit: DebitNotificationResponseData,
+  kyc: KYCNotificationResponseData,
+};
 
-interface NotificationMeta<D extends IFromTrustlyRequestData> {
+export type NotificationTypes = KnownNotificationTypes & { [k: string]: UnknownNotificationData };
+export type NotificationAckTypes = KnownNotificationAckTypes & { [k: string]: NotificationResponseDataBase<AckDataStatus> };
 
-  listeners: NotificationListener<D>[];
+interface NotificationMeta<M extends string = string> {
+  listeners: NotificationListener<M>[];
 }
 
 export class TrustlyApiClient {
 
   private static readonly AVAILABLE_HTTP_REQUESTERS: HttpRequesterLoader[] = [
+    new FetchHttpRequesterLoader(),
     new NodeJsHttpRequesterLoader(),
   ];
+
+  public static registerHttpRequester(requester: HttpRequester): void {
+    TrustlyApiClient.AVAILABLE_HTTP_REQUESTERS.splice(0, 0, {
+      create() {
+        return requester;
+      }
+    });
+  }
 
   private static getFirstAvailableHttpRequester(): HttpRequester {
 
@@ -116,7 +121,7 @@ export class TrustlyApiClient {
     for (const loader of TrustlyApiClient.AVAILABLE_HTTP_REQUESTERS) {
 
       foundHttpRequester = loader.create();
-      if (foundHttpRequester !== null) {
+      if (foundHttpRequester) {
         break;
       }
     }
@@ -134,7 +139,7 @@ export class TrustlyApiClient {
   private readonly signer: JsonRpcSigner;
   private readonly httpRequester: HttpRequester;
 
-  private readonly onNotification: Map<string, NotificationMeta<IFromTrustlyRequestData>> = new Map();
+  private readonly onNotification = new Map<string, NotificationMeta>();
 
   public getSettings(): TrustlyApiClientSettingsData {
     return this.settings;
@@ -163,8 +168,8 @@ export class TrustlyApiClient {
    * <p>
    * Only settled transactions are included.
    */
-  public accountLedger(request: WithoutProvidedProperties<AccountLedgerRequestData>): Promise<AccountLedgerResponseData> {
-    return this.sendRequest<AccountLedgerResponseData>(request, 'AccountLedger');
+  public accountLedger(request: WithoutProvidedProperties<AccountLedgerRequestData>): Promise<AccountLedgerResponseResult['data']> {
+    return this.sendRequest<AccountLedgerResponseResult['data']>('AccountLedger', request);
   }
 
   /**
@@ -216,7 +221,7 @@ export class TrustlyApiClient {
    * </ol>
    */
   public accountPayout(request: WithoutProvidedProperties<AccountPayoutRequestData>): Promise<AccountPayoutResponseData> {
-    return this.sendRequest<AccountPayoutResponseData>(request, 'AccountPayout');
+    return this.sendRequest<AccountPayoutResponseData>('AccountPayout', request);
   }
 
   /**
@@ -224,7 +229,7 @@ export class TrustlyApiClient {
    * of the withdrawals.
    */
   public approveWithdrawal(request: WithoutProvidedProperties<ApproveWithdrawalRequestData>): Promise<ApproveWithdrawalResponseData> {
-    return this.sendRequest<ApproveWithdrawalResponseData>(request, 'ApproveWithdrawal');
+    return this.sendRequest<ApproveWithdrawalResponseData>('ApproveWithdrawal', request);
   }
 
   /**
@@ -232,8 +237,8 @@ export class TrustlyApiClient {
    * <p>
    * 🚧 Please do not use this method more than once every 15 minutes.
    */
-  public balance(request: WithoutProvidedProperties<BalanceRequestData>): Promise<BalanceResponseData> {
-    return this.sendRequest<BalanceResponseData>(request, 'Balance');
+  public balance(request: WithoutProvidedProperties<BalanceRequestData>): Promise<BalanceResponseResult['data']> {
+    return this.sendRequest<BalanceResponseResult['data']>('Balance', request);
   }
 
   /**
@@ -244,7 +249,7 @@ export class TrustlyApiClient {
    * {@code Charge} request if the {@code PaymentDate} is equal to the date when {@code Charge} request was sent.
    */
   public cancelCharge(request: WithoutProvidedProperties<CancelChargeRequestData>): Promise<CancelChargeResponseData> {
-    return this.sendRequest<CancelChargeResponseData>(request, 'CancelCharge');
+    return this.sendRequest<CancelChargeResponseData>('CancelCharge', request);
   }
 
   /**
@@ -254,7 +259,7 @@ export class TrustlyApiClient {
    * {@link TrustlyApiClient#selectAccount} for details).
    */
   public charge(request: WithoutProvidedProperties<ChargeRequestData>): Promise<ChargeResponseData> {
-    return this.sendRequest<ChargeResponseData>(request, 'Charge');
+    return this.sendRequest<ChargeResponseData>('Charge', request);
   }
 
   /**
@@ -263,7 +268,7 @@ export class TrustlyApiClient {
    * Please contact your integration manager at Trustly if you want to enable automatic approval of the withdrawals.
    */
   public denyWithdrawal(request: WithoutProvidedProperties<DenyWithdrawalRequestData>): Promise<DenyWithdrawalResponseData> {
-    return this.sendRequest<DenyWithdrawalResponseData>(request, 'DenyWithdrawal');
+    return this.sendRequest<DenyWithdrawalResponseData>('DenyWithdrawal', request);
   }
 
   /**
@@ -291,15 +296,15 @@ export class TrustlyApiClient {
    * </ol>
    */
   public deposit(request: WithoutProvidedProperties<DepositRequestData>): Promise<DepositResponseData> {
-    return this.sendRequest<DepositResponseData>(request, 'Deposit');
+    return this.sendRequest<DepositResponseData>('Deposit', request);
   }
 
   /**
    * This method returns the details of a payout (works for the {@link TrustlyApiClient#withdraw}, {@link TrustlyApiClient#accountPayout}
    * and {@link TrustlyApiClient#refund} methods).
    */
-  public getWithdrawals(request: WithoutProvidedProperties<GetWithdrawalsRequestData>): Promise<GetWithdrawalsResponseData> {
-    return this.sendRequest<GetWithdrawalsResponseData>(request, 'GetWithdrawals');
+  public getWithdrawals(request: WithoutProvidedProperties<GetWithdrawalsRequestData>): Promise<GetWithdrawalsResponseResult['data']> {
+    return this.sendRequest<GetWithdrawalsResponseResult['data']>('GetWithdrawals', request);
   }
 
   /**
@@ -311,11 +316,11 @@ export class TrustlyApiClient {
    * when the refund request is received, the refund will be queued and executed once the money for the deposit has been received.
    */
   public refund(request: WithoutProvidedProperties<RefundRequestData>): Promise<RefundResponseData> {
-    return this.sendRequest<RefundResponseData>(request, 'Refund');
+    return this.sendRequest<RefundResponseData>('Refund', request);
   }
 
   public createAccount(request: WithoutProvidedProperties<CreateAccountRequestData>): Promise<CreateAccountResponseData> {
-    return this.sendRequest<CreateAccountResponseData>(request, 'CreateAccount');
+    return this.sendRequest<CreateAccountResponseData>('CreateAccount', request);
   }
 
   /**
@@ -335,7 +340,7 @@ export class TrustlyApiClient {
    * </ol>
    */
   public selectAccount(request: WithoutProvidedProperties<SelectAccountRequestData>): Promise<SelectAccountResponseData> {
-    return this.sendRequest<SelectAccountResponseData>(request, 'SelectAccount');
+    return this.sendRequest<SelectAccountResponseData>('SelectAccount', request);
   }
 
   /**
@@ -354,28 +359,24 @@ export class TrustlyApiClient {
    * Multiple calls to this method with the same bank account details will result in the same {@link RegisterAccountResponseData#accountid} being returned.
    */
   public registerAccount(request: WithoutProvidedProperties<RegisterAccountRequestData>): Promise<RegisterAccountResponseData> {
-    return this.sendRequest<RegisterAccountResponseData>(request, 'RegisterAccount');
+    return this.sendRequest<RegisterAccountResponseData>('RegisterAccount', request);
   }
 
   public registerAccountPayout(request: WithoutProvidedProperties<RegisterAccountPayoutRequestData>): Promise<RegisterAccountPayoutResponseData> {
-    return this.sendRequest<RegisterAccountPayoutResponseData>(request, 'RegisterAccountPayout');
+    return this.sendRequest<RegisterAccountPayoutResponseData>('RegisterAccountPayout', request);
   }
 
   public merchantSettlement(request: WithoutProvidedProperties<MerchantSettlementRequestData>): Promise<MerchantSettlementResponseData> {
-    return this.sendRequest<MerchantSettlementResponseData>(request, 'MerchantSettlement');
+    return this.sendRequest<MerchantSettlementResponseData>('MerchantSettlement', request);
   }
 
-  public settlementReport(request: WithoutProvidedProperties<SettlementReportRequestData>): Promise<SettlementReportResponseData> {
+  public settlementReport(request: WithoutProvidedProperties<SettlementReportRequestData>): Promise<SettlementReportResponseDataEntry[]> {
 
-    return this.sendRequest<UnparsedSettlementReportResponseData>(request, 'ViewAutomaticSettlementDetailsCSV')
+    return this.sendRequest<SettlementReportResponseData>('ViewAutomaticSettlementDetailsCSV', request)
       .then(response => {
 
         const parser = new SettlementReportParser();
-        const parsed = parser.parse(response.view_automatic_settlement_details);
-
-        return {
-          entries: parsed,
-        };
+        return parser.parse(response.view_automatic_settlement_details);
       });
   }
 
@@ -434,22 +435,21 @@ export class TrustlyApiClient {
    * </ol>
    */
   public withdraw(request: WithoutProvidedProperties<WithdrawRequestData>): Promise<WithdrawResponseData> {
-    return this.sendRequest<WithdrawResponseData>(request, 'Withdraw');
+    return this.sendRequest<WithdrawResponseData>('Withdraw', request);
   }
 
   /**
    * Add a listener for a certain notification type.
    */
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-  public addNotificationListener<M extends Exclude<keyof KnownNotificationTypes, number> | string, D extends NotificationTypes[M]>(method: M, listener: NotificationListener<D>): void {
+  public addNotificationListener<const M extends string>(method: M, listener: NotificationListener<M>): void {
 
-    let meta: NotificationMeta<D> | undefined = this.onNotification.get(method);
+    let meta = this.onNotification.get(method) as unknown as NotificationMeta<M>;
     if (!meta) {
       meta = {
         listeners: [],
       };
 
-      this.onNotification.set(method, meta as NotificationMeta<IFromTrustlyRequestData>);
+      this.onNotification.set(method, meta as unknown as NotificationMeta);
     }
 
     meta.listeners.push(listener);
@@ -468,11 +468,14 @@ export class TrustlyApiClient {
    * @return The JsonRpc response data
    * @throws TrustlyValidationException Thrown if the request does not pass proper validations
    */
-  public createRequestPackage<T extends IRequestParamsData>(
-    requestData: T,
-    method: string,
+  public createRequestPackage<
+    M extends string,
+    TData extends AbstractRequestData<AbstractRequestDataAttributes>
+  >(
+    requestData: TData,
+    method: M,
     uuid?: string,
-  ): JsonRpcRequest<T> {
+  ): JsonRpcRequest<JsonRpcRequestParams<TData>, M> {
 
     const rpcRequest = this.objectFactory.create(requestData, method, uuid);
     return this.signer.signRequest(rpcRequest);
@@ -489,22 +492,23 @@ export class TrustlyApiClient {
    * @returns {R}        A signed and validated JsonRpc response package
    * @throws TrustlyValidationException Thrown if the response does not pass proper validations
    */
-  public createResponsePackage<R extends IResponseResultData>(
-    method: string,
+  public createResponsePackage<
+    D,
+    M extends string = string,
+  >(
+    method: M,
     uuid: string,
-    responseData: R,
-  ): JsonRpcResponse<R> {
+    responseData: D,
+  ): JsonRpcResponse<ResponseResult<D, M>> {
 
-    const unsignedRpcResponse: WithoutSignature<JsonRpcResponse<R>> = {
+    return this.signer.signResponse({
       version: '1.1',
       result: {
         data: responseData,
         method: method,
         uuid: uuid,
       },
-    };
-
-    return this.signer.signResponse(unsignedRpcResponse);
+    });
   }
 
   /**
@@ -512,17 +516,20 @@ export class TrustlyApiClient {
    * <p>
    * Should only be used if you need to call an undocumented/newly released method that is not yet added to this library.
    */
-  public sendRequest<R extends IResponseResultData, T extends IToTrustlyRequestParams = IToTrustlyRequestParams>(
-    requestData: WithoutProvidedProperties<T>,
+  public sendRequest<TResData>(
     method: string,
+    requestData: WithoutProvidedProperties<AbstractRequestData<AbstractRequestDataAttributes>>,
     uuid?: string,
-  ): Promise<R> {
+  ): Promise<TResData> {
 
     try {
       return this.sendRequestWithSpecificExceptions(requestData, method, uuid);
     } catch (e) {
 
-      if (e instanceof TrustlyValidationException || e instanceof TrustlyErrorResponseException || e instanceof TrustlyRejectionException || e instanceof TrustlySignatureException) {
+      if (e instanceof TrustlyValidationException
+        || e instanceof TrustlyErrorResponseException
+        || e instanceof TrustlyRejectionException
+        || e instanceof TrustlySignatureException) {
         throw new TrustlyRequestException(e);
       } else {
         throw e;
@@ -546,19 +553,19 @@ export class TrustlyApiClient {
    * @throws TrustlySignatureException     If the signature of the request or response could not be verified
    * @throws TrustlyValidationException    If the request or response could not be properly validated
    */
-  private async sendRequestWithSpecificExceptions<R extends IResponseResultData, T extends IToTrustlyRequestParams>(
-    requestData: WithoutProvidedProperties<T>,
-    method: string,
+  private async sendRequestWithSpecificExceptions<M extends string, TResData, TReqData extends AbstractRequestData<AbstractRequestDataAttributes>>(
+    requestData: WithoutProvidedProperties<TReqData>,
+    method: M,
     uuid?: string,
-  ): Promise<R> {
+  ): Promise<TResData> {
 
     const requestWithGlobalProperties = {
       ...requestData,
       Username: this.settings.username,
       Password: this.settings.password,
-    } as T;
+    } as TReqData;
 
-    const rpcRequest: JsonRpcRequest<T> = this.createRequestPackage(requestWithGlobalProperties, method, uuid);
+    const rpcRequest = this.createRequestPackage(requestWithGlobalProperties, method, uuid);
 
     // TODO: Convert some fields according to special handling -- such as boolean strings ("1", "0")
     const requestString: string = JSON.stringify(rpcRequest);
@@ -568,28 +575,27 @@ export class TrustlyApiClient {
     // TODO: This needs to be validated and done in a better way. How do we know the types?
     const rpcNodeResponse: unknown = JSON.parse(responseString);
 
-    const rpcResponse: JsonRpcResponse<R> = rpcNodeResponse as JsonRpcResponse<R>;
+    const rpcResponse = rpcNodeResponse as JsonRpcResponse<ResponseResult<TResData, M>> | JsonRpcErrorResponse;
 
     TrustlyApiClient.assertSuccessful(rpcResponse);
     TrustlyApiClient.assertWithoutRejection(rpcResponse);
 
     this.signer.verifyResponse(rpcResponse);
 
-    const responseUuid = rpcResponse.result.uuid; // rpcResponse.result ?  : rpcResponse.error?.error?.uuid;
+    const responseUuid = rpcResponse.result.uuid;
 
-    if (TrustlyStringUtils.isBlank(responseUuid) || responseUuid !== rpcRequest.params.UUID) {
-      throw new TrustlyValidationException(`Incoming UUID is not valid. Expected ${rpcRequest.params.UUID} but got back ${responseUuid}`);
+    if (TrustlyStringUtils.isBlank(responseUuid) || responseUuid !== rpcRequest.params?.UUID) {
+      throw new TrustlyValidationException(`Incoming UUID is not valid. Expected ${rpcRequest.params?.UUID} but got back ${responseUuid}`);
     }
 
     return rpcResponse.result.data;
   }
 
-  private static assertWithoutRejection<R extends IResponseResultData>(rpcResponse: JsonRpcResponse<R>): void {
+  private static assertWithoutRejection<M extends string, D, TRes extends ResponseResult<D, M>>(rpcResponse: JsonRpcResponse<TRes>): void {
 
-    // instanceof IWithRejectionResult
     const obj: unknown = (rpcResponse.result?.data ?? {});
     if (typeof obj == 'object' && obj && 'rejected' in obj) {
-      const rejectionResult = obj as IWithRejectionResult;
+      const rejectionResult = obj as WithRejection<unknown, string>;
 
       if (!rejectionResult.result) {
 
@@ -606,7 +612,7 @@ export class TrustlyApiClient {
     }
   }
 
-  private static assertSuccessful<D extends IResponseResultData>(rpcResponse: JsonRpcResponse<D>): asserts rpcResponse is JsonRpcResponseWithResult<D> {
+  private static assertSuccessful<M extends string, D, TRes extends ResponseResult<D, M>>(rpcResponse: JsonRpcResponse<TRes> | JsonRpcErrorResponse): asserts rpcResponse is JsonRpcResponse<TRes> {
 
     let message: string | undefined;
     if (rpcResponse.error) {
@@ -624,15 +630,16 @@ export class TrustlyApiClient {
       let fullMessage: string;
       if (rpcResponse.error) {
         fullMessage = `Received an error response from the Trustly API: ${message ?? ''}`;
+        throw new TrustlyErrorResponseException(fullMessage, undefined, rpcResponse.error);
       } else {
         if (typeof rpcResponse == 'object' && Object.keys(rpcResponse).length > 0) {
           fullMessage = `Received an invalid response without known result from the Trustly API: ${message ?? JSON.stringify(rpcResponse)}`;
         } else {
           fullMessage = `Received a no-result response from the Trustly API: ${message ?? JSON.stringify(rpcResponse)}`;
         }
-      }
 
-      throw new TrustlyErrorResponseException(fullMessage, undefined, rpcResponse.error);
+        throw new TrustlyErrorResponseException(fullMessage, undefined);
+      }
     }
   }
 
@@ -653,18 +660,16 @@ export class TrustlyApiClient {
    * handling of an incoming notification.
    *
    * @param jsonString The incoming notification as a JSON string
-   * @param onOK The callback which will be executed if a listener calls {@link NotificationArgs#respondWithOk()}.
-   * @param onFailed The callback which will be executed if a listener calls {@link NotificationArgs#respondWithFailed(String)}.
+   * @param onResponse The callback which will be executed if a listener calls {@link NotificationArgs#respondWith()}.
    *
    * @throws IOException If the JSON string could not be deserialized or the response could not be sent.
    * @throws TrustlyNoNotificationListenerException If there was no listener for the notification, nor one for unknown ones.
    * @throws TrustlyValidationException If the response data could not be properly validated.
    * @throws TrustlySignatureException If the signature of the response could not be properly verified.
    */
-  public async handleNotification<D extends IFromTrustlyRequestData>(
+  public async handleNotification<const M extends string>(
     jsonString: string,
-    onOK?: NotificationOkHandler,
-    onFailed?: NotificationFailHandler,
+    onResponse?: NotificationResponseHandler<M>,
   ): Promise<void> {
 
     const jsonToken = JSON.parse(jsonString) as Record<string, unknown>;
@@ -675,17 +680,16 @@ export class TrustlyApiClient {
       methodValue = '';
     }
 
-    let meta = this.onNotification.get(methodValue);
+    let meta = this.onNotification.get(methodValue) as unknown as NotificationMeta<M>;
     if (!meta || meta.listeners.length == 0) {
       console.warn(`There is no listener for incoming notification '${methodValue}'. Will fallback on 'unknown' listener`);
-      meta = this.onNotification.get('');
+      meta = this.onNotification.get('') as unknown as NotificationMeta<M>;
       if (!meta || meta.listeners.length == 0) {
         return Promise.reject(new TrustlyNoNotificationListenerException(`There is no listener for incoming notification '${methodValue}' nor unknown`));
       }
     }
 
-    // TODO: There needs to be special consideration for some fields here, like the string booleans
-    const rpcRequest: NotificationRequest<D> = JSON.parse(jsonString) as NotificationRequest<D>;
+    const rpcRequest = JSON.parse(jsonString) as JsonRpcNotification<JsonRpcNotificationParams<NotificationTypes[M]>, M>;
 
     try {
 
@@ -700,33 +704,17 @@ export class TrustlyApiClient {
       }
     }
 
-    const args: NotificationArgs<D> = new NotificationArgs(
-      rpcRequest.params.data,
-      rpcRequest.method,
-      rpcRequest.params.uuid,
-      onOK,
-      onFailed,
-    );
-
-    try {
-
-      const promises: Promise<void>[] = [];
-      for (const listener of meta.listeners) {
-        promises.push(listener(args));
-      }
-
-      return Promise.all(promises).then();
-    } catch (ex) {
-
-      const message = this.settings.includeExceptionMessageInNotificationResponse
-        ? ((ex instanceof Error) ? ex.message : JSON.stringify(ex))
-        : '';
-
-      if (onFailed) {
-        return onFailed(rpcRequest.method, rpcRequest.params.uuid, message);
-      } else {
-        return Promise.reject(new Error(message));
-      }
+    if (!rpcRequest.params?.data || !rpcRequest.params?.uuid) {
+      throw new Error(`Missing data and/or uuid`);
     }
+
+    const args = new NotificationArgs(rpcRequest.method, rpcRequest.params?.data, rpcRequest.params?.uuid, onResponse);
+
+    const promises: Promise<void>[] = [];
+    for (const listener of meta.listeners) {
+      promises.push(listener(args));
+    }
+
+    return Promise.all(promises).then();
   }
 }
