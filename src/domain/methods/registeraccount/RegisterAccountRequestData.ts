@@ -7,7 +7,7 @@ export interface RegisterAccountRequestData extends AbstractToTrustlyRequestData
    * ID, username, hash or anything uniquely identifying the end-user to be identified. Preferably the same ID/username as used in the
    * merchant's own backoffice in order to simplify for the merchant's support department
    */
-  EndUserId: string;
+  EndUserID: string;
 
   /**
    * The clearing house of the end-user's bank account. Typically the name of a country in uppercase letters. See table
