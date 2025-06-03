@@ -16,7 +16,7 @@ export class NodeJsHttpRequester implements HttpRequester {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Content-Length': request.length,
+            'Content-Length': Buffer.byteLength(request, 'utf8'),
           },
         },
         response => {
